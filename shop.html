@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shop — Brine & Shell</title>
+  <meta name="description" content="Shop Brine & Shell peanut butter: cubes, dual-flavor jars, fuel packs, and our ceramic jar. 100% real peanuts, no palm oil, no preservatives. Free delivery above ₹499." />
+  <link rel="canonical" href="https://www.brineandshell.com/shop.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Shop — Brine & Shell" />
+  <meta property="og:description" content="100% real peanuts, no palm oil, no preservatives. Free delivery above ₹499." />
+  <meta property="og:image" content="https://www.brineandshell.com/images/brineandshell.png" />
+  <meta property="og:url" content="https://www.brineandshell.com/shop.html" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" type="image/png" href="images/brineandshell.png" />
   <link rel="apple-touch-icon" href="images/brineandshell.png" />
   <meta name="theme-color" content="#1C1B3A" />
@@ -15,28 +23,12 @@
 </head>
 <body>
 
-<nav class="navbar" id="navbar">
-  <a href="index.html" class="nav-logo">
-    <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
-    <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="shop.html" class="active">Shop</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a href="contact.html">Contact</a></li>
-  </ul>
-  <a href="shop.html" class="nav-cta">🛒 Cart <span class="nav-cart-badge" id="cartBadge">0</span></a>
-  <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
-</nav>
-<div class="mobile-menu" id="mobileMenu">
-  <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a>
-</div>
+<div id="site-header"></div>
 
 <div class="page-hero">
   <p class="eyebrow">Brine &amp; Shell Store</p>
   <h1>Our Products</h1>
-  <p>Choose your perfect peanut butter. Free delivery on orders above ₹499.</p>
+  <p>Choose your perfect peanut butter. Free delivery on orders above <span data-fd-amount>₹499</span>.</p>
 </div>
 
 <div class="shop-layout">
@@ -62,7 +54,7 @@
 <!-- CHECKOUT MODAL -->
 <div class="overlay" id="overlay">
   <div class="modal">
-    <button class="modal-close" onclick="closeCheckout()">✕</button>
+    <button class="modal-close" onclick="closeCheckout()" aria-label="Close checkout">✕</button>
     <p class="eyebrow">Checkout</p>
     <h2>Review &amp; Pay</h2>
     <div class="form-group"><label>Full Name</label><input type="text" id="cName" placeholder="Riya Sharma" /></div>
@@ -83,39 +75,22 @@
 
 <div id="toast">🎉 Order placed successfully! Thank you.</div>
 
-<footer class="footer">
-  <div class="footer-top">
-    <div class="footer-brand">
-      <div class="footer-logo">
-        <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
-        <span>Brine <span class="amp">&amp;</span> Shell</span>
-      </div>
-      <p>Like Butter, But Better.<br />Made with love and real peanuts.</p>
-    </div>
-    <div class="footer-links"><h4>Quick Links</h4><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
-    <div class="footer-links"><h4>Help</h4><a href="contact.html">Returns &amp; Refunds</a><a href="contact.html">Shipping Info</a><a href="contact.html">Track Order</a></div>
-    <div class="footer-links"><h4>Contact</h4><a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a><a href="tel:+911234567890">+91 12345 67890</a></div>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2024 Brine &amp; Shell. All rights reserved.</p>
-    <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
-  </div>
-</footer>
+<div id="site-footer"></div>
 
+<script src="js/products.js"></script>
 <script>
-/* ── PRODUCT DATA ── */
-const PRODUCTS = [
-  { id:'cubes',   name:'Peanut Butter Cubes',    price:299, wt:'10 cubes', badge:'Bestseller', bc:'badge-default', img:'images/peanut-butter-cubes.jpeg', tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'10 individually wrapped cubes. Portioned perfection for your workout or morning toast.' },
-  { id:'dual',    name:'Dual Flavor Jar',         price:549, wt:'400g',     badge:'New',        bc:'badge-new',     img:'images/peanut-butter-jar.jpeg',      tags:['High Protein','Non-GMO','No Preservatives','Easy Scooping'],  desc:'2 flavors, 1 jar. Crunchy Peanut Butter + Protein Peanut Butter. Wide-mouth for easy scooping.' },
-  { id:'fuel',    name:'Peanut Butter Fuel Pack', price:99,  wt:'30g',      badge:null,         bc:'',              img:'images/peanut-butter-shashe.jpeg',            tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'On-the-go 30g sachet for athletes, hikers, commuters — anyone who needs quick fuel.' },
-  { id:'ceramic', name:'Peanut Butter Ceramic Jar',price:699, wt:'500g',    badge:'Premium',    bc:'badge-premium', img:'images/peanut-butter-ceramic.jpeg',          tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'Premium peanut-shaped ceramic jar. Made with 100% real peanuts. A kitchen showpiece.' },
-];
+  window.PAGE = { active: 'shop', cartNav: true };
+</script>
+<script src="js/partials.js"></script>
+<script>
+/* PRODUCTS and SITE_CONFIG now come from js/products.js — the single
+   source of truth shared with index.html. Do not redefine them here. */
 
 /* ── CART ── */
 let cart = {};
 
 function sub() { return Object.entries(cart).reduce((s,[id,q])=>s+(PRODUCTS.find(p=>p.id===id).price*q),0); }
-function del() { const s=sub(); return s===0?0:s>=499?0:49; }
+function del() { const s=sub(); return s===0?0:s>=SITE_CONFIG.freeDeliveryThreshold?0:SITE_CONFIG.deliveryFee; }
 function items() { return Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({...PRODUCTS.find(p=>p.id===id),q})); }
 
 /* ── RENDER PRODUCTS ── */
@@ -123,7 +98,7 @@ function renderProducts() {
   document.getElementById('productsGrid').innerHTML = PRODUCTS.map(p=>`
     <div class="product-card">
       <div class="pc-img">
-        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <img src="${p.img}" alt="${p.name}" width="600" height="600" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
         <div class="ph" style="display:none">🥜<p>${p.name.split(' ')[0]}</p></div>
         ${p.badge?`<span class="pc-badge ${p.bc}">${p.badge}</span>`:''}
       </div>
@@ -133,9 +108,9 @@ function renderProducts() {
         <div class="pc-footer">
           <span class="price">₹${p.price}</span>
           <div class="qty-ctrl" id="qc-${p.id}" style="display:none">
-            <button class="qty-btn" onclick="chg('${p.id}',-1)">−</button>
+            <button class="qty-btn" onclick="chg('${p.id}',-1)" aria-label="Decrease quantity">−</button>
             <span class="qty-num" id="qn-${p.id}">0</span>
-            <button class="qty-btn" onclick="chg('${p.id}',1)">+</button>
+            <button class="qty-btn" onclick="chg('${p.id}',1)" aria-label="Increase quantity">+</button>
           </div>
           <button class="btn-sm" id="atc-${p.id}" onclick="add('${p.id}')">Add to Cart</button>
         </div>
@@ -162,14 +137,14 @@ function renderCart() {
   const list=items();
   const badge=document.getElementById('cartBadge');
   const total=list.reduce((s,i)=>s+i.q,0);
-  badge.textContent=total; badge.style.display=total?'inline':'none';
+  if (badge) { badge.textContent=total; badge.style.display=total?'inline':'none'; }
 
   if(!list.length){ document.getElementById('cartBody').innerHTML='<p class="cart-empty">Your cart is empty.</p>'; document.getElementById('cartFooter').style.display='none'; return; }
   document.getElementById('cartFooter').style.display='block';
   document.getElementById('cartBody').innerHTML=list.map(i=>`
     <div class="cart-item">
       <div><div class="cart-item-name">${i.name}</div><div class="cart-item-meta">₹${i.price} × ${i.q}</div></div>
-      <div style="display:flex;align-items:center;gap:6px"><span class="cart-item-price">₹${i.price*i.q}</span><button class="cart-remove" onclick="chg('${i.id}',-${i.q})">×</button></div>
+      <div style="display:flex;align-items:center;gap:6px"><span class="cart-item-price">₹${i.price*i.q}</span><button class="cart-remove" onclick="chg('${i.id}',-${i.q})" aria-label="Remove ${i.name} from cart">×</button></div>
     </div>`).join('');
   const s=sub(),d=del();
   document.getElementById('cartSub').textContent=`₹${s}`;
@@ -190,7 +165,11 @@ function openCheckout() {
 function closeCheckout() { document.getElementById('overlay').classList.remove('open'); }
 
 /* ── RAZORPAY ──
-   Replace YOUR_RAZORPAY_KEY_ID with your key from dashboard.razorpay.com → Settings → API Keys */
+   NOT WIRED UP. Replace YOUR_RAZORPAY_KEY_ID with your key from
+   dashboard.razorpay.com → Settings → API Keys, AND put order
+   creation + payment verification on a real server before taking
+   real payments — the amount here is computed in the browser and
+   is not safe to trust as-is. See the site audit for details. */
 const RZP_KEY = 'YOUR_RAZORPAY_KEY_ID';
 
 function initiateRazorpay() {
@@ -230,8 +209,6 @@ function initiateRazorpay() {
 }
 
 /* ── INIT ── */
-function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>30));
 document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeCheckout(); });
 document.addEventListener('DOMContentLoaded',()=>{ renderProducts(); renderCart(); });
 </script>

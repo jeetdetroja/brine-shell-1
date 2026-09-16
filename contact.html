@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact — Brine & Shell</title>
+  <meta name="description" content="Questions, bulk orders, or partnerships? Reach Brine & Shell by email or phone, or send a message — we respond within 24 hours on business days." />
+  <link rel="canonical" href="https://www.brineandshell.com/contact.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Contact — Brine & Shell" />
+  <meta property="og:description" content="Get in touch with Brine & Shell for orders, bulk pricing, partnerships, or support." />
+  <meta property="og:image" content="https://www.brineandshell.com/images/brineandshell.png" />
+  <meta property="og:url" content="https://www.brineandshell.com/contact.html" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" type="image/png" href="images/brineandshell.png" />
   <link rel="apple-touch-icon" href="images/brineandshell.png" />
   <meta name="theme-color" content="#1C1B3A" />
@@ -14,23 +22,7 @@
 </head>
 <body>
 
-<nav class="navbar" id="navbar">
-  <a href="index.html" class="nav-logo">
-    <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
-    <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="shop.html">Shop</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a href="contact.html" class="active">Contact</a></li>
-  </ul>
-  <a href="shop.html" class="nav-cta">Shop Now</a>
-  <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
-</nav>
-<div class="mobile-menu" id="mobileMenu">
-  <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a>
-</div>
+<div id="site-header"></div>
 
 <div class="page-hero">
   <p class="eyebrow">Get in Touch</p>
@@ -48,21 +40,21 @@
       <div class="c-detail"><span class="c-icon">📧</span><div><strong>Email</strong><span>hello@brineandshell.com</span></div></div>
       <div class="c-detail"><span class="c-icon">📞</span><div><strong>Phone</strong><span>+91 12345 67890</span><span style="display:block;font-size:12px;color:#999">Mon–Sat, 10am–6pm IST</span></div></div>
       <div class="c-detail"><span class="c-icon">📍</span><div><strong>Address</strong><span>Mumbai, Maharashtra, India</span></div></div>
-      <div class="c-detail"><span class="c-icon">🚚</span><div><strong>Delivery</strong><span>Pan-India. Free above ₹499.</span></div></div>
+      <div class="c-detail"><span class="c-icon">🚚</span><div><strong>Delivery</strong><span>Pan-India. Free above <span data-fd-amount>₹499</span>.</span></div></div>
 
       <div class="faq-box">
         <h4>Quick Answers</h4>
-        <div class="faq-item" onclick="this.classList.toggle('open')">
-          <div class="faq-q">Do you ship pan-India? <span>▾</span></div>
-          <div class="faq-a">Yes! We ship to all pin codes across India. Delivery in 3–5 business days.</div>
+        <div class="faq-item">
+          <button class="faq-q" id="faqBtn1">Do you ship pan-India? <span>▾</span></button>
+          <div class="faq-a" id="faqA1">Yes! We ship to all pin codes across India. Delivery in 3–5 business days.</div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('open')">
-          <div class="faq-q">Can I return a product? <span>▾</span></div>
-          <div class="faq-a">We have a 7-day return policy for damaged or incorrect products.</div>
+        <div class="faq-item">
+          <button class="faq-q" id="faqBtn2">Can I return a product? <span>▾</span></button>
+          <div class="faq-a" id="faqA2">We have a 7-day return policy for damaged or incorrect products.</div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('open')">
-          <div class="faq-q">Do you do bulk orders? <span>▾</span></div>
-          <div class="faq-a">Yes! Special pricing for 20+ units. Email us at hello@brineandshell.com.</div>
+        <div class="faq-item">
+          <button class="faq-q" id="faqBtn3">Do you do bulk orders? <span>▾</span></button>
+          <div class="faq-a" id="faqA3">Yes! Special pricing for 20+ units. Email us at hello@brineandshell.com.</div>
         </div>
       </div>
     </div>
@@ -92,26 +84,29 @@
   </div>
 </div>
 
-<footer class="footer">
-  <div class="footer-top">
-    <div class="footer-brand">
-      <div class="footer-logo"><img src="images/brineandshell.png" alt="" onerror="this.style.display='none'" /><span>Brine <span class="amp">&amp;</span> Shell</span></div>
-      <p>Like Butter, But Better.<br />Made with love and real peanuts.</p>
-    </div>
-    <div class="footer-links"><h4>Quick Links</h4><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
-    <div class="footer-links"><h4>Products</h4><a href="shop.html">Peanut Butter Cubes</a><a href="shop.html">Dual Flavor Jar</a><a href="shop.html">Fuel Pack</a><a href="shop.html">Ceramic Jar</a></div>
-    <div class="footer-links"><h4>Contact</h4><a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a><a href="tel:+911234567890">+91 12345 67890</a></div>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2024 Brine &amp; Shell. All rights reserved.</p>
-    <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
-  </div>
-</footer>
+<div id="site-footer"></div>
 
+<script src="js/products.js"></script>
 <script>
-function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>30));
-function submitForm(e){ e.preventDefault(); const s=document.getElementById('formSuccess'); s.style.display='block'; e.target.reset(); setTimeout(()=>s.style.display='none',5000); }
+  window.PAGE = { active: 'contact', cartNav: false };
+</script>
+<script src="js/partials.js"></script>
+<script>
+function submitForm(e) {
+  e.preventDefault();
+  // NOTE: this only simulates success — the message is not actually
+  // sent or stored anywhere yet. See the site audit for what's needed
+  // to wire this up to a real form backend or email service.
+  const s = document.getElementById('formSuccess');
+  s.style.display = 'block';
+  e.target.reset();
+  setTimeout(() => s.style.display = 'none', 5000);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initAccordionToggle(document.getElementById('faqBtn1'), 'faqA1');
+  initAccordionToggle(document.getElementById('faqBtn2'), 'faqA2');
+  initAccordionToggle(document.getElementById('faqBtn3'), 'faqA3');
+});
 </script>
 </body>
 </html>

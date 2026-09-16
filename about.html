@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About — Brine & Shell</title>
+  <meta name="description" content="Brine & Shell started in one kitchen with one belief: real peanut butter shouldn't need a chemistry degree to read the ingredients. Learn our story and values." />
+  <link rel="canonical" href="https://www.brineandshell.com/about.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="About — Brine & Shell" />
+  <meta property="og:description" content="Born from a love of real food: our story, our values, and why we make peanut butter the way we do." />
+  <meta property="og:image" content="https://www.brineandshell.com/images/brineandshell.png" />
+  <meta property="og:url" content="https://www.brineandshell.com/about.html" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" type="image/png" href="images/brineandshell.png" />
   <link rel="apple-touch-icon" href="images/brineandshell.png" />
   <meta name="theme-color" content="#1C1B3A" />
@@ -14,23 +22,7 @@
 </head>
 <body>
 
-<nav class="navbar" id="navbar">
-  <a href="index.html" class="nav-logo">
-    <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
-    <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="shop.html">Shop</a></li>
-    <li><a href="about.html" class="active">About</a></li>
-    <li><a href="contact.html">Contact</a></li>
-  </ul>
-  <a href="shop.html" class="nav-cta">Shop Now</a>
-  <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
-</nav>
-<div class="mobile-menu" id="mobileMenu">
-  <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a>
-</div>
+<div id="site-header"></div>
 
 <div class="about-hero">
   <p class="eyebrow" style="color:var(--gold)">Our Story</p>
@@ -47,9 +39,9 @@
     <p style="color:var(--muted)">Today, every product we make carries that same philosophy: use real ingredients, don't overcomplicate things, and make something you'd actually want to eat every single day.</p>
   </div>
   <div class="about-story-img">
-    <img src="images/peanut-butter-ceramic.jpeg" alt="Brine & Shell story" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+    <img src="images/peanut-butter-ceramic.jpeg" width="800" height="1000" loading="lazy" alt="Brine & Shell story" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
     <div style="display:none;height:380px;background:linear-gradient(135deg,var(--cream-dk),var(--gold));align-items:center;justify-content:center;">
-      <img src="images/brineandshell.png" style="width:100px;border-radius:50%" onerror="this.style.display='none'" />
+      <img src="images/brineandshell.png" width="100" height="100" style="width:100px;border-radius:50%" alt="" onerror="this.style.display='none'" />
     </div>
   </div>
 </div>
@@ -84,25 +76,12 @@
   <a href="shop.html" class="btn btn-primary">Shop All Products</a>
 </section>
 
-<footer class="footer">
-  <div class="footer-top">
-    <div class="footer-brand">
-      <div class="footer-logo"><img src="images/brineandshell.png" alt="" onerror="this.style.display='none'" /><span>Brine <span class="amp">&amp;</span> Shell</span></div>
-      <p>Like Butter, But Better.<br />Made with love and real peanuts.</p>
-    </div>
-    <div class="footer-links"><h4>Quick Links</h4><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
-    <div class="footer-links"><h4>Products</h4><a href="shop.html">Peanut Butter Cubes</a><a href="shop.html">Dual Flavor Jar</a><a href="shop.html">Fuel Pack</a><a href="shop.html">Ceramic Jar</a></div>
-    <div class="footer-links"><h4>Contact</h4><a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a><a href="tel:+911234567890">+91 12345 67890</a></div>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2024 Brine &amp; Shell. All rights reserved.</p>
-    <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
-  </div>
-</footer>
+<div id="site-footer"></div>
 
+<script src="js/products.js"></script>
 <script>
-function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>30));
+  window.PAGE = { active: 'about', cartNav: false };
 </script>
+<script src="js/partials.js"></script>
 </body>
 </html>

@@ -259,8 +259,8 @@ img { max-width: 100%; display: block; }
 .contact-form h3 { font-size: 22px; color: var(--navy); margin-bottom: 24px; }
 .faq-box { margin-top: 40px; background: var(--white); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
 .faq-box h4 { font-size: 18px; color: var(--navy); margin-bottom: 16px; }
-.faq-item { border-bottom: 1px solid var(--cream-dk); padding: 12px 0; cursor: pointer; }
-.faq-q { font-size: 14px; font-weight: 600; color: var(--navy); display: flex; justify-content: space-between; }
+.faq-item { border-bottom: 1px solid var(--cream-dk); padding: 12px 0; }
+.faq-q { font-size: 14px; font-weight: 600; color: var(--navy); display: flex; justify-content: space-between; width: 100%; background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-family: 'Inter', sans-serif; text-align: left; }
 .faq-a { display: none; font-size: 13px; color: var(--muted); margin-top: 8px; }
 .faq-item.open .faq-a { display: block; }
 
@@ -292,3 +292,11 @@ img { max-width: 100%; display: block; }
   .features-strip { grid-template-columns: 1fr; }
   .section { padding: 60px 5%; }
 }
+
+
+/* ============ ACCESSIBILITY ============ */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.nav-toggle:focus-visible { outline-offset: 4px; }
