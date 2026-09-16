@@ -71,7 +71,7 @@ function buildFooter() {
     </div>
     <div class="footer-links">
       <h4>Contact</h4>
-      <a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a>
+      <a href="mailto:support@brineandshell.com">support@brineandshell.com</a>
       <a href="tel:+911234567890">+91 12345 67890</a>
       <p>Mon–Sat, 10am–6pm IST</p>
     </div>

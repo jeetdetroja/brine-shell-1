@@ -58,7 +58,7 @@ directly. Change a price in exactly one place.
 3. Create an API key, put it in `RESEND_API_KEY`.
 4. Set `CONTACT_FROM_EMAIL` to an address on your verified domain
    (e.g. `orders@brineandshell.com`) and `CONTACT_TO_EMAIL` to where
-   you want contact-form messages delivered (e.g. `hello@brineandshell.com`).
+   you want contact-form messages delivered (e.g. `support@brineandshell.com`).
 
 ### Razorpay
 
