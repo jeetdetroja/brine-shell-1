@@ -1,61 +1,36 @@
 /* =========================================
-   BRINE & SHELL — Product Catalog
-   Single source of truth for product data and
-   site-wide commerce config (used by index.html
-   and shop.html so price/description/image can
-   never drift between pages).
+   BRINE & SHELL — Product Catalog Loader
+   Single source of truth is data/products.json,
+   which this file loads AND which the backend
+   (backend/server.js) reads directly on the
+   server for price verification. Never hardcode
+   prices/descriptions here or in any page again —
+   edit data/products.json instead.
    ========================================= */
-window.SITE_CONFIG = {
-  freeDeliveryThreshold: 499,
-  deliveryFee: 49,
-};
 
-window.PRODUCTS = [
-  {
-    id: 'cubes',
-    name: 'Peanut Butter Cubes',
-    price: 299,
-    wt: '10 cubes',
-    badge: 'Bestseller',
-    bc: 'badge-default',
-    img: 'images/peanut-butter-cubes.jpeg',
-    tags: ['High Protein', 'Non-GMO', 'No Preservatives', 'Easy to Spread'],
-    desc: '10 individually wrapped cubes. Portioned perfection for your workout or morning toast.',
-  },
-  {
-    id: 'dual',
-    name: 'Dual Flavor Jar',
-    price: 549,
-    wt: '400g',
-    badge: 'New',
-    bc: 'badge-new',
-    img: 'images/peanut-butter-jar.jpeg',
-    tags: ['High Protein', 'Non-GMO', 'No Preservatives', 'Easy Scooping'],
-    desc: '2 flavors, 1 jar. Crunchy Peanut Butter + Protein Peanut Butter. Wide-mouth for easy scooping.',
-  },
-  {
-    id: 'fuel',
-    name: 'Peanut Butter Fuel Pack',
-    price: 99,
-    wt: '30g sachet',
-    badge: null,
-    bc: '',
-    img: 'images/peanut-butter-shashe.jpeg',
-    tags: ['High Protein', 'Non-GMO', 'No Preservatives', 'Easy to Spread'],
-    desc: 'On-the-go 30g sachet for athletes, hikers, commuters — anyone who needs quick fuel.',
-  },
-  {
-    id: 'ceramic',
-    name: 'Peanut Butter Ceramic Jar',
-    price: 699,
-    wt: '500g',
-    badge: 'Premium',
-    bc: 'badge-premium',
-    img: 'images/peanut-butter-ceramic.jpeg',
-    tags: ['High Protein', 'Non-GMO', 'No Preservatives', 'Easy to Spread'],
-    desc: 'Premium peanut-shaped ceramic jar. Made with 100% real peanuts. A kitchen showpiece.',
-  },
-];
+window.PRODUCTS = [];
+window.SITE_CONFIG = {};
+
+window.PRODUCTS_READY = fetch('data/products.json')
+  .then(res => {
+    if (!res.ok) throw new Error('Failed to load product catalog: ' + res.status);
+    return res.json();
+  })
+  .then(data => {
+    window.PRODUCTS = data.products;
+    window.SITE_CONFIG = data.config;
+    document.querySelectorAll('[data-fd-amount]').forEach(el => {
+      el.textContent = '₹' + SITE_CONFIG.freeDeliveryThreshold;
+    });
+    document.querySelectorAll('[data-fd-fee]').forEach(el => {
+      el.textContent = '₹' + SITE_CONFIG.deliveryFee;
+    });
+    return window.PRODUCTS;
+  })
+  .catch(err => {
+    console.error(err);
+    return [];
+  });
 
 /* Renders read-only preview cards (used on the homepage — CTA links to
    the shop instead of adding to a cart) so home and shop never show
@@ -78,15 +53,3 @@ function renderProductPreviewCards(containerId, products) {
       </div>
     </div>`).join('');
 }
-
-/* Fills in any element tagged data-fd-amount / data-fd-fee with the
-   live free-delivery config, so the ₹499 / ₹49 figures quoted in page
-   copy can never drift from the number the cart actually charges. */
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-fd-amount]').forEach(el => {
-    el.textContent = '₹' + SITE_CONFIG.freeDeliveryThreshold;
-  });
-  document.querySelectorAll('[data-fd-fee]').forEach(el => {
-    el.textContent = '₹' + SITE_CONFIG.deliveryFee;
-  });
-});

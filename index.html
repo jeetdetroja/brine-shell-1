@@ -119,9 +119,10 @@
   <div class="newsletter-inner">
     <h2>Get 10% off your first order</h2>
     <p>Subscribe for recipes, offers, and peanut butter love.</p>
-    <form class="nl-form" onsubmit="handleNL(event)">
-      <input type="email" placeholder="your@email.com" required />
-      <button type="submit" class="btn btn-primary">Subscribe</button>
+    <form class="nl-form" id="nlForm" onsubmit="handleNL(event)">
+      <input type="email" name="email" placeholder="your@email.com" required />
+      <input type="text" name="company" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;width:1px;height:1px;" aria-hidden="true" />
+      <button type="submit" class="btn btn-primary" id="nlSubmitBtn">Subscribe</button>
     </form>
     <p class="nl-msg" id="nlMsg"></p>
   </div>
@@ -129,21 +130,38 @@
 
 <div id="site-footer"></div>
 
+<script src="js/config.js"></script>
 <script src="js/products.js"></script>
 <script>
   window.PAGE = { active: 'home', cartNav: false };
 </script>
 <script src="js/partials.js"></script>
 <script>
-function handleNL(e) {
+async function handleNL(e) {
   e.preventDefault();
-  // NOTE: this only simulates success — no email is actually captured
-  // or sent anywhere yet. See the site audit for what's needed to wire
-  // this up to a real newsletter provider.
-  document.getElementById('nlMsg').textContent = '🎉 Thanks! Your 10% code is on its way.';
-  e.target.reset();
+  const form = e.target;
+  const msg = document.getElementById('nlMsg');
+  const btn = document.getElementById('nlSubmitBtn');
+  const fd = new FormData(form);
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/newsletter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(fd.entries())),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Something went wrong.');
+    msg.textContent = '🎉 Thanks! Your 10% code is on its way.';
+    form.reset();
+  } catch (err) {
+    msg.textContent = '⚠️ ' + (err.message || 'Could not subscribe right now. Please try again.');
+  } finally {
+    btn.disabled = false;
+  }
 }
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.PRODUCTS_READY;
   renderProductPreviewCards('homeProductsGrid', PRODUCTS);
 });
 </script>

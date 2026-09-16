@@ -1,0 +1,24 @@
+{
+  "name": "brine-shell-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API for brineandshell.com: contact form, newsletter signup, and Razorpay checkout with server-side order verification.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "google-auth-library": "^9.14.1",
+    "googleapis": "^140.0.1",
+    "razorpay": "^2.9.4",
+    "resend": "^4.0.0"
+  }
+}

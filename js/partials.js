@@ -73,7 +73,7 @@ function buildFooter() {
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© ${year} Brine &amp; Shell. All rights reserved.</p>
+    <p>© ${year} Brine &amp; Shell. All rights reserved. &nbsp;·&nbsp; <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="refund-policy.html">Refund Policy</a></p>
     <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
   </div>
 </footer>`;
@@ -106,11 +106,15 @@ function initAccordionToggle(buttonEl, panelId) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for data/products.json (js/products.js) so the footer's
+  // product links always reflect the real catalog, not the fallback.
+  if (window.PRODUCTS_READY) await window.PRODUCTS_READY;
   const page = window.PAGE || {};
   const headerEl = document.getElementById('site-header');
   const footerEl = document.getElementById('site-footer');
   if (headerEl) headerEl.innerHTML = buildHeader(page);
   if (footerEl) footerEl.innerHTML = buildFooter();
   initNavScroll();
+  document.dispatchEvent(new CustomEvent('partials:ready'));
 });

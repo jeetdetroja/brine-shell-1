@@ -179,6 +179,7 @@ img { max-width: 100%; display: block; }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,.1); padding: 20px 5%; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,.45); flex-wrap: wrap; gap: 12px; }
 .footer-pay { display: flex; align-items: center; gap: 6px; }
 .footer-pay strong { color: var(--gold); }
+.footer-bottom a:hover { color: var(--gold); }
 
 /* ============ PAGE HERO ============ */
 .page-hero { padding: 140px 5% 64px; background: linear-gradient(140deg, var(--cream) 0%, #f3ddb8 100%); text-align: center; }
@@ -229,6 +230,7 @@ img { max-width: 100%; display: block; }
 .form-submit { width: 100%; padding: 14px; font-size: 16px; font-weight: 700; background: var(--navy); color: var(--white); border: none; border-radius: 50px; cursor: pointer; font-family: 'Inter', sans-serif; transition: background .2s; }
 .form-submit:hover { background: var(--gold); color: var(--navy); }
 .form-success { display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 14px 18px; color: #155724; font-size: 14px; margin-top: 14px; }
+.form-error { display: none; background: #f8d7da; border: 1px solid #f5c2c7; border-radius: 8px; padding: 14px 18px; color: #842029; font-size: 14px; margin-top: 14px; }
 
 /* ============ ABOUT ============ */
 .about-hero { padding: 140px 5% 80px; background: var(--navy); text-align: center; }

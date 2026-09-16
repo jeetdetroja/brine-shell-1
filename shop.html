@@ -77,6 +77,7 @@
 
 <div id="site-footer"></div>
 
+<script src="js/config.js"></script>
 <script src="js/products.js"></script>
 <script>
   window.PAGE = { active: 'shop', cartNav: true };
@@ -165,52 +166,84 @@ function openCheckout() {
 function closeCheckout() { document.getElementById('overlay').classList.remove('open'); }
 
 /* ── RAZORPAY ──
-   NOT WIRED UP. Replace YOUR_RAZORPAY_KEY_ID with your key from
-   dashboard.razorpay.com → Settings → API Keys, AND put order
-   creation + payment verification on a real server before taking
-   real payments — the amount here is computed in the browser and
-   is not safe to trust as-is. See the site audit for details. */
-const RZP_KEY = 'YOUR_RAZORPAY_KEY_ID';
-
-function initiateRazorpay() {
+   The amount is never computed here and trusted — we send the cart
+   (product ids + quantities only) to the backend, which recomputes
+   the total from data/products.json and creates the Razorpay order
+   itself. After payment, we send the signature back to the backend
+   for verification before treating the order as real. */
+async function initiateRazorpay() {
   const name=document.getElementById('cName').value.trim();
   const email=document.getElementById('cEmail').value.trim();
   const phone=document.getElementById('cPhone').value.trim();
   if(!name||!email||!phone){ alert('Please fill in your name, email and phone.'); return; }
   if(phone.length!==10){ alert('Enter a valid 10-digit phone number.'); return; }
 
-  if(RZP_KEY==='YOUR_RAZORPAY_KEY_ID'){
-    alert('⚠️ Razorpay Key not set.\n\nOpen shop.html and replace YOUR_RAZORPAY_KEY_ID with your key from dashboard.razorpay.com');
-    return;
-  }
+  const payBtn = document.querySelector('.rzp-btn');
+  payBtn.disabled = true;
+  const originalLabel = payBtn.innerHTML;
+  payBtn.textContent = 'Starting checkout…';
 
-  const grand=sub()+del();
-  const rzp = new Razorpay({
-    key: RZP_KEY,
-    amount: grand*100,
-    currency: 'INR',
-    name: 'Brine & Shell',
-    description: items().map(i=>`${i.name} ×${i.q}`).join(', '),
-    image: 'images/brineandshell.png',
-    prefill: { name, email, contact:'+91'+phone },
-    theme: { color:'#1C1B3A' },
-    handler: function(res) {
-      closeCheckout();
-      cart={};
-      renderProducts();
-      renderCart();
-      const t=document.getElementById('toast');
-      t.style.display='block';
-      setTimeout(()=>t.style.display='none',4500);
-    }
-  });
-  rzp.on('payment.failed',r=>alert('Payment failed: '+r.error.description));
-  rzp.open();
+  try {
+    const res = await fetch(`${API_BASE}/api/checkout/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items().map(i => ({ id: i.id, qty: i.q })),
+        customer: { name, email, phone },
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not start checkout.');
+
+    const rzp = new Razorpay({
+      key: data.keyId,
+      order_id: data.orderId,
+      amount: data.amount,
+      currency: data.currency,
+      name: 'Brine & Shell',
+      description: items().map(i=>`${i.name} ×${i.q}`).join(', '),
+      image: 'images/brineandshell.png',
+      prefill: { name, email, contact:'+91'+phone },
+      theme: { color:'#1C1B3A' },
+      handler: async function(response) {
+        try {
+          const verifyRes = await fetch(`${API_BASE}/api/checkout/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              customerEmail: email,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (!verifyRes.ok || !verifyData.ok) throw new Error('verification failed');
+          closeCheckout();
+          cart={};
+          renderProducts();
+          renderCart();
+          const t=document.getElementById('toast');
+          t.style.display='block';
+          setTimeout(()=>t.style.display='none',4500);
+        } catch (verifyErr) {
+          alert('Payment went through but could not be verified. Please contact us with your payment ID: ' + response.razorpay_payment_id);
+        }
+      }
+    });
+    rzp.on('payment.failed', r => alert('Payment failed: ' + r.error.description));
+    rzp.open();
+  } catch (err) {
+    alert('⚠️ ' + (err.message || 'Could not start checkout. Please try again.'));
+  } finally {
+    payBtn.disabled = false;
+    payBtn.innerHTML = originalLabel;
+  }
 }
 
 /* ── INIT ── */
 document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeCheckout(); });
-document.addEventListener('DOMContentLoaded',()=>{ renderProducts(); renderCart(); });
+document.addEventListener('DOMContentLoaded', async ()=>{ await window.PRODUCTS_READY; renderProducts(); renderCart(); });
 </script>
 </body>
 </html>
