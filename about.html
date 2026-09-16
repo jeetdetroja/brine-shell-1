@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Brine & Shell</title>
+  <link rel="icon" type="image/png" href="images/brineandshell.png" />
+  <link rel="apple-touch-icon" href="images/brineandshell.png" />
+  <meta name="theme-color" content="#1C1B3A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
+    <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html">Shop</a></li>
+    <li><a href="about.html" class="active">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <a href="shop.html" class="nav-cta">Shop Now</a>
+  <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+</div>
+
+<div class="about-hero">
+  <p class="eyebrow" style="color:var(--gold)">Our Story</p>
+  <h1 style="color:var(--white)">Born from a love of<br /><em style="color:var(--gold)">real food</em></h1>
+  <p>We started with one jar, one kitchen, and one belief — great food should have an ingredients list short enough to read in a breath.</p>
+</div>
+
+<div class="about-story">
+  <div style="flex:1">
+    <p class="eyebrow">How It Started</p>
+    <h2 style="color:var(--navy);font-size:clamp(24px,3.5vw,38px);margin:10px 0 20px">From kitchen experiments to your pantry</h2>
+    <p style="color:var(--muted);margin-bottom:16px">Brine & Shell was born in a small kitchen where the founders — a pair of food-obsessed friends — got tired of peanut butter jars filled with palm oil, preservatives, and vague "natural flavors."</p>
+    <p style="color:var(--muted);margin-bottom:16px">They started grinding their own peanuts, adjusting salt ratios (hence <em>brine</em>), and perfecting the texture until family and friends couldn't stop coming back for more jars.</p>
+    <p style="color:var(--muted)">Today, every product we make carries that same philosophy: use real ingredients, don't overcomplicate things, and make something you'd actually want to eat every single day.</p>
+  </div>
+  <div class="about-story-img">
+    <img src="images/peanut-butter-ceramic.jpeg" alt="Brine & Shell story" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+    <div style="display:none;height:380px;background:linear-gradient(135deg,var(--cream-dk),var(--gold));align-items:center;justify-content:center;">
+      <img src="images/brineandshell.png" style="width:100px;border-radius:50%" onerror="this.style.display='none'" />
+    </div>
+  </div>
+</div>
+
+<section class="section" style="background:var(--white)">
+  <div class="section-header">
+    <p class="eyebrow">What We Stand For</p>
+    <h2>Our Values</h2>
+    <p class="section-sub">Every decision we make is guided by these four principles.</p>
+  </div>
+  <div class="values-grid">
+    <div class="value-card"><div class="value-icon">🥜</div><h3>Real Ingredients</h3><p>Peanuts. Salt. That's it. No palm oil, no added sugars, nothing you can't pronounce.</p></div>
+    <div class="value-card"><div class="value-icon">💪</div><h3>High Protein</h3><p>Our peanut butter is a genuine protein source — not a marketing claim. Every serving packs a real punch.</p></div>
+    <div class="value-card"><div class="value-icon">🌱</div><h3>Non-GMO</h3><p>We source only non-GMO peanuts. What goes into the jar is what nature grew — nothing engineered.</p></div>
+    <div class="value-card"><div class="value-icon">♻️</div><h3>Sustainable Packaging</h3><p>From ceramic jars to recyclable sachets, we think about what happens after you've eaten every last bit.</p></div>
+  </div>
+</section>
+
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div><div class="stat-num">100%</div><p class="stat-label">Real Peanuts</p></div>
+    <div><div class="stat-num">4</div><p class="stat-label">Unique Products</p></div>
+    <div><div class="stat-num">0</div><p class="stat-label">Preservatives</p></div>
+    <div><div class="stat-num">★ 5</div><p class="stat-label">Avg. Rating</p></div>
+  </div>
+</div>
+
+<section class="section" style="background:var(--cream);text-align:center">
+  <p class="eyebrow">Ready to Try?</p>
+  <h2 style="color:var(--navy);font-size:clamp(28px,4vw,46px);margin-bottom:14px">Find your perfect spread</h2>
+  <p style="color:var(--muted);max-width:480px;margin:0 auto 32px">From on-the-go sachets to premium ceramic jars — we have a product for every lifestyle.</p>
+  <a href="shop.html" class="btn btn-primary">Shop All Products</a>
+</section>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo"><img src="images/brineandshell.png" alt="" onerror="this.style.display='none'" /><span>Brine <span class="amp">&amp;</span> Shell</span></div>
+      <p>Like Butter, But Better.<br />Made with love and real peanuts.</p>
+    </div>
+    <div class="footer-links"><h4>Quick Links</h4><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+    <div class="footer-links"><h4>Products</h4><a href="shop.html">Peanut Butter Cubes</a><a href="shop.html">Dual Flavor Jar</a><a href="shop.html">Fuel Pack</a><a href="shop.html">Ceramic Jar</a></div>
+    <div class="footer-links"><h4>Contact</h4><a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a><a href="tel:+911234567890">+91 12345 67890</a></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Brine &amp; Shell. All rights reserved.</p>
+    <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
+  </div>
+</footer>
+
+<script>
+function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>30));
+</script>
+</body>
+</html>

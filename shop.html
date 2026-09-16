@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop — Brine & Shell</title>
+  <link rel="icon" type="image/png" href="images/brineandshell.png" />
+  <link rel="apple-touch-icon" href="images/brineandshell.png" />
+  <meta name="theme-color" content="#1C1B3A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-logo">
+    <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
+    <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html" class="active">Shop</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <a href="shop.html" class="nav-cta">🛒 Cart <span class="nav-cart-badge" id="cartBadge">0</span></a>
+  <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+</div>
+
+<div class="page-hero">
+  <p class="eyebrow">Brine &amp; Shell Store</p>
+  <h1>Our Products</h1>
+  <p>Choose your perfect peanut butter. Free delivery on orders above ₹499.</p>
+</div>
+
+<div class="shop-layout">
+  <div class="shop-products">
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+  <aside class="cart-sidebar">
+    <h3>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1C1B3A" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Your Cart
+    </h3>
+    <div id="cartBody"><p class="cart-empty">Your cart is empty.</p></div>
+    <div id="cartFooter" style="display:none">
+      <div class="cart-total-row"><span>Subtotal</span><span id="cartSub">₹0</span></div>
+      <div class="cart-total-row"><span style="color:var(--muted);font-size:13px">Delivery</span><span id="cartDel" style="color:var(--muted);font-size:13px">₹0</span></div>
+      <div class="cart-total-row grand"><span>Total</span><span id="cartGrand">₹0</span></div>
+      <button class="cart-checkout-btn" onclick="openCheckout()">Proceed to Pay</button>
+      <p class="pay-note">🔒 Secured by Razorpay · UPI · Cards · PhonePe · Google Pay</p>
+    </div>
+  </aside>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCheckout()">✕</button>
+    <p class="eyebrow">Checkout</p>
+    <h2>Review &amp; Pay</h2>
+    <div class="form-group"><label>Full Name</label><input type="text" id="cName" placeholder="Riya Sharma" /></div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Email</label><input type="email" id="cEmail" placeholder="you@email.com" /></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="cPhone" placeholder="9876543210" maxlength="10" /></div>
+    </div>
+    <div class="order-summary" id="orderSummary"></div>
+    <button class="rzp-btn" onclick="initiateRazorpay()">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Pay Securely with Razorpay
+    </button>
+    <div class="pay-chips">
+      <span class="pay-chip">💳 Cards</span><span class="pay-chip">📱 UPI</span><span class="pay-chip">PhonePe</span><span class="pay-chip">G Pay</span><span class="pay-chip">🏦 NetBanking</span>
+    </div>
+  </div>
+</div>
+
+<div id="toast">🎉 Order placed successfully! Thank you.</div>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <img src="images/brineandshell.png" alt="Brine & Shell" onerror="this.style.display='none'" />
+        <span>Brine <span class="amp">&amp;</span> Shell</span>
+      </div>
+      <p>Like Butter, But Better.<br />Made with love and real peanuts.</p>
+    </div>
+    <div class="footer-links"><h4>Quick Links</h4><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+    <div class="footer-links"><h4>Help</h4><a href="contact.html">Returns &amp; Refunds</a><a href="contact.html">Shipping Info</a><a href="contact.html">Track Order</a></div>
+    <div class="footer-links"><h4>Contact</h4><a href="mailto:hello@brineandshell.com">hello@brineandshell.com</a><a href="tel:+911234567890">+91 12345 67890</a></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Brine &amp; Shell. All rights reserved.</p>
+    <div class="footer-pay"><span>Secured by</span><strong>Razorpay</strong><span>| UPI · Cards · PhonePe · Google Pay</span></div>
+  </div>
+</footer>
+
+<script>
+/* ── PRODUCT DATA ── */
+const PRODUCTS = [
+  { id:'cubes',   name:'Peanut Butter Cubes',    price:299, wt:'10 cubes', badge:'Bestseller', bc:'badge-default', img:'images/peanut-butter-cubes.jpeg', tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'10 individually wrapped cubes. Portioned perfection for your workout or morning toast.' },
+  { id:'dual',    name:'Dual Flavor Jar',         price:549, wt:'400g',     badge:'New',        bc:'badge-new',     img:'images/peanut-butter-jar.jpeg',      tags:['High Protein','Non-GMO','No Preservatives','Easy Scooping'],  desc:'2 flavors, 1 jar. Crunchy Peanut Butter + Protein Peanut Butter. Wide-mouth for easy scooping.' },
+  { id:'fuel',    name:'Peanut Butter Fuel Pack', price:99,  wt:'30g',      badge:null,         bc:'',              img:'images/peanut-butter-shashe.jpeg',            tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'On-the-go 30g sachet for athletes, hikers, commuters — anyone who needs quick fuel.' },
+  { id:'ceramic', name:'Peanut Butter Ceramic Jar',price:699, wt:'500g',    badge:'Premium',    bc:'badge-premium', img:'images/peanut-butter-ceramic.jpeg',          tags:['High Protein','Non-GMO','No Preservatives','Easy to Spread'], desc:'Premium peanut-shaped ceramic jar. Made with 100% real peanuts. A kitchen showpiece.' },
+];
+
+/* ── CART ── */
+let cart = {};
+
+function sub() { return Object.entries(cart).reduce((s,[id,q])=>s+(PRODUCTS.find(p=>p.id===id).price*q),0); }
+function del() { const s=sub(); return s===0?0:s>=499?0:49; }
+function items() { return Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({...PRODUCTS.find(p=>p.id===id),q})); }
+
+/* ── RENDER PRODUCTS ── */
+function renderProducts() {
+  document.getElementById('productsGrid').innerHTML = PRODUCTS.map(p=>`
+    <div class="product-card">
+      <div class="pc-img">
+        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="ph" style="display:none">🥜<p>${p.name.split(' ')[0]}</p></div>
+        ${p.badge?`<span class="pc-badge ${p.bc}">${p.badge}</span>`:''}
+      </div>
+      <div class="pc-body">
+        <h3>${p.name}</h3><p class="wt">${p.wt}</p><p>${p.desc}</p>
+        <div class="pc-tags">${p.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
+        <div class="pc-footer">
+          <span class="price">₹${p.price}</span>
+          <div class="qty-ctrl" id="qc-${p.id}" style="display:none">
+            <button class="qty-btn" onclick="chg('${p.id}',-1)">−</button>
+            <span class="qty-num" id="qn-${p.id}">0</span>
+            <button class="qty-btn" onclick="chg('${p.id}',1)">+</button>
+          </div>
+          <button class="btn-sm" id="atc-${p.id}" onclick="add('${p.id}')">Add to Cart</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function add(id) {
+  cart[id]=(cart[id]||0)+1;
+  document.getElementById(`qn-${id}`).textContent=cart[id];
+  document.getElementById(`atc-${id}`).style.display='none';
+  document.getElementById(`qc-${id}`).style.display='flex';
+  renderCart();
+}
+
+function chg(id,d) {
+  cart[id]=Math.max(0,(cart[id]||0)+d);
+  document.getElementById(`qn-${id}`).textContent=cart[id];
+  if(cart[id]===0){ document.getElementById(`atc-${id}`).style.display=''; document.getElementById(`qc-${id}`).style.display='none'; }
+  renderCart();
+}
+
+function renderCart() {
+  const list=items();
+  const badge=document.getElementById('cartBadge');
+  const total=list.reduce((s,i)=>s+i.q,0);
+  badge.textContent=total; badge.style.display=total?'inline':'none';
+
+  if(!list.length){ document.getElementById('cartBody').innerHTML='<p class="cart-empty">Your cart is empty.</p>'; document.getElementById('cartFooter').style.display='none'; return; }
+  document.getElementById('cartFooter').style.display='block';
+  document.getElementById('cartBody').innerHTML=list.map(i=>`
+    <div class="cart-item">
+      <div><div class="cart-item-name">${i.name}</div><div class="cart-item-meta">₹${i.price} × ${i.q}</div></div>
+      <div style="display:flex;align-items:center;gap:6px"><span class="cart-item-price">₹${i.price*i.q}</span><button class="cart-remove" onclick="chg('${i.id}',-${i.q})">×</button></div>
+    </div>`).join('');
+  const s=sub(),d=del();
+  document.getElementById('cartSub').textContent=`₹${s}`;
+  document.getElementById('cartDel').textContent=d===0?'FREE':`₹${d}`;
+  document.getElementById('cartGrand').textContent=`₹${s+d}`;
+}
+
+/* ── CHECKOUT ── */
+function openCheckout() {
+  if(!items().length) return;
+  const s=sub(),d=del();
+  document.getElementById('orderSummary').innerHTML=`
+    ${items().map(i=>`<div class="order-row"><span>${i.name} ×${i.q}</span><span>₹${i.price*i.q}</span></div>`).join('')}
+    <div class="order-row"><span>Delivery</span><span>${d===0?'FREE':'₹'+d}</span></div>
+    <div class="order-row total"><span>Total</span><span>₹${s+d}</span></div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeCheckout() { document.getElementById('overlay').classList.remove('open'); }
+
+/* ── RAZORPAY ──
+   Replace YOUR_RAZORPAY_KEY_ID with your key from dashboard.razorpay.com → Settings → API Keys */
+const RZP_KEY = 'YOUR_RAZORPAY_KEY_ID';
+
+function initiateRazorpay() {
+  const name=document.getElementById('cName').value.trim();
+  const email=document.getElementById('cEmail').value.trim();
+  const phone=document.getElementById('cPhone').value.trim();
+  if(!name||!email||!phone){ alert('Please fill in your name, email and phone.'); return; }
+  if(phone.length!==10){ alert('Enter a valid 10-digit phone number.'); return; }
+
+  if(RZP_KEY==='YOUR_RAZORPAY_KEY_ID'){
+    alert('⚠️ Razorpay Key not set.\n\nOpen shop.html and replace YOUR_RAZORPAY_KEY_ID with your key from dashboard.razorpay.com');
+    return;
+  }
+
+  const grand=sub()+del();
+  const rzp = new Razorpay({
+    key: RZP_KEY,
+    amount: grand*100,
+    currency: 'INR',
+    name: 'Brine & Shell',
+    description: items().map(i=>`${i.name} ×${i.q}`).join(', '),
+    image: 'images/brineandshell.png',
+    prefill: { name, email, contact:'+91'+phone },
+    theme: { color:'#1C1B3A' },
+    handler: function(res) {
+      closeCheckout();
+      cart={};
+      renderProducts();
+      renderCart();
+      const t=document.getElementById('toast');
+      t.style.display='block';
+      setTimeout(()=>t.style.display='none',4500);
+    }
+  });
+  rzp.on('payment.failed',r=>alert('Payment failed: '+r.error.description));
+  rzp.open();
+}
+
+/* ── INIT ── */
+function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>30));
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeCheckout(); });
+document.addEventListener('DOMContentLoaded',()=>{ renderProducts(); renderCart(); });
+</script>
+</body>
+</html>
