@@ -60,4 +60,19 @@ async function updateRowByKey(tabName, key, updates) {
   return true;
 }
 
-module.exports = { appendRow, updateRowByKey };
+
+/* Returns every row in a tab as an array of arrays (row 1 = header).
+   Used to filter Orders by the logged-in user's email, or to find a
+   single order by id, without needing a real database. */
+async function getRows(tabName) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const auth = getAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+  const { data } = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: `${tabName}!A:Z`,
+  });
+  return data.values || [];
+}
+
+module.exports = { appendRow, updateRowByKey, getRows };

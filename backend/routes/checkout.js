@@ -49,6 +49,8 @@ router.post('/create-order', async (req, res) => {
   }
 
   try {
+    // Column order matches the Orders sheet header:
+    // Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status
     await appendRow('Orders', [
       order.id,
       new Date().toISOString(),
@@ -58,6 +60,7 @@ router.post('/create-order', async (req, res) => {
       phone,
       priced.lineItems.map(i => `${i.name} x${i.qty}`).join('; '),
       priced.total,
+      '', // fulfillment status is set once payment is verified
     ]);
   } catch (err) {
     console.error('Sheets append failed (order):', err.message);
@@ -97,7 +100,7 @@ router.post('/verify', async (req, res) => {
   }
 
   try {
-    await updateRowByKey('Orders', razorpay_order_id, { C: 'paid' });
+    await updateRowByKey('Orders', razorpay_order_id, { C: 'paid', I: 'Order Placed' });
   } catch (err) {
     console.error('Sheets update failed (order verify):', err.message);
   }

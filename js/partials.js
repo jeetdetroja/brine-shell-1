@@ -36,10 +36,14 @@ function buildHeader(page) {
     <span class="nav-logo-text">Brine <span class="amp">&amp;</span> Shell</span>
   </a>
   <ul class="nav-links">${navLinks}</ul>
+  <div class="nav-auth" id="navAuth"></div>
   ${cta}
   <button class="nav-toggle" id="navToggle" onclick="toggleMenu()" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu">&#9776;</button>
 </nav>
-<div class="mobile-menu" id="mobileMenu">${mobileLinks}</div>`;
+<div class="mobile-menu" id="mobileMenu">
+  ${mobileLinks}
+  <div class="mobile-auth" id="mobileAuth"></div>
+</div>`;
 }
 
 function buildFooter() {

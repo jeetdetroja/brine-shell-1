@@ -70,6 +70,66 @@ directly. Change a price in exactly one place.
    end and the legal pages (Privacy/Terms/Refund Policy) are live —
    Razorpay generally requires those before enabling live payments.
 
+### Google Sign-In (Client ID for the "Continue with Google" button)
+
+This is separate from the service account above — that one is a robot
+account for Sheets access; this one lets real customers sign in.
+
+1. In the same (or a new) project at
+   [console.cloud.google.com](https://console.cloud.google.com), go to
+   **APIs & Services → OAuth consent screen**. Choose **External**,
+   fill in the app name ("Brine & Shell"), your support email, and
+   save. You don't need Google's verification for this — a handful of
+   scopes (name/email) don't require review.
+2. Go to **APIs & Services → Credentials → Create Credentials → OAuth
+   client ID**. Application type: **Web application**.
+3. Under **Authorized JavaScript origins**, add every URL the site
+   will actually be opened from, e.g.:
+   - `https://www.brineandshell.com`
+   - `https://brineandshell.com` (if you support the bare domain too)
+   - `http://localhost:5500` or similar, only while testing locally
+4. You do **not** need an Authorized redirect URI for this flow (the
+   Google Identity Services button posts a token directly, no
+   redirect).
+5. Copy the generated **Client ID** (ends in
+   `.apps.googleusercontent.com`):
+   - Put it in `GOOGLE_CLIENT_ID` in `backend/.env`.
+   - Also put it in `js/config.js` as `window.GOOGLE_CLIENT_ID` — this
+     one is *meant* to be public, it's not a secret, just an
+     identifier telling Google which app is asking.
+6. Reload the site — the nav should now show a real "Sign in with
+   Google" button instead of "Sign-in not configured yet".
+
+### Update the Orders sheet's header row
+
+Pass 2 added a **Fulfillment Status** column. Your `Orders` tab's
+header row (row 1) should read left to right:
+
+```
+Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status
+```
+
+Also add a new tab named **Returns** with header row:
+
+```
+Timestamp | Order ID | Customer Email | Items | Reason | Status
+```
+
+### Admin password
+
+Pick a strong, unique password and put it in `ADMIN_PASSWORD` in
+`.env` — it's the only thing protecting `/admin.html`, where you
+update order statuses. Don't reuse a password from anywhere else.
+
+### Session secret
+
+Generate one random value for `SESSION_SECRET` (used to sign both
+customer and admin session cookies):
+
+```
+openssl rand -hex 32
+```
+
 ## 2. Configure
 
 ```
@@ -133,7 +193,22 @@ The contact/newsletter calls should land a row in your Google Sheet
 and an email in your inbox within a few seconds. The checkout call
 should return a real Razorpay `orderId` once test keys are in `.env`.
 
-## 5. Local development (optional)
+## 5. Try the new customer/admin features
+
+- Visit `/admin.html` on your domain, sign in with `ADMIN_PASSWORD`,
+  and you'll see every paid order with a status dropdown. Changing it
+  emails the customer automatically.
+- Visit any page — once `GOOGLE_CLIENT_ID` is set in both `.env` and
+  `js/config.js`, the nav shows a real "Sign in with Google" button.
+  After signing in, it shows the customer's name/email instead, with
+  a dropdown for **My Orders** and **Sign Out**.
+- `/account.html` lists the signed-in customer's paid orders (matched
+  by the email they used at checkout — no separate signup needed).
+  Clicking one shows the Order Placed → Dispatched → Shipped →
+  Delivered stepper and a **Request a Return** button, which logs to
+  the `Returns` tab and emails you.
+
+## 6. Local development (optional)
 
 ```bash
 cd backend

@@ -5,3 +5,8 @@
    the site reads from this one place.
    ========================================= */
 window.API_BASE = '';
+
+/* From Google Cloud Console once you create the "Sign in with
+   Google" OAuth Client ID (steps in backend/README.md). Must match
+   GOOGLE_CLIENT_ID in the backend's .env exactly. */
+window.GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';

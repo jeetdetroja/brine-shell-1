@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="style.css" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
@@ -82,6 +83,7 @@
 <script>
   window.PAGE = { active: 'shop', cartNav: true };
 </script>
+<script src="js/auth.js"></script>
 <script src="js/partials.js"></script>
 <script>
 /* PRODUCTS and SITE_CONFIG now come from js/products.js — the single
@@ -156,6 +158,10 @@ function renderCart() {
 /* ── CHECKOUT ── */
 function openCheckout() {
   if(!items().length) return;
+  if (window.CURRENT_USER) {
+    document.getElementById('cName').value = document.getElementById('cName').value || window.CURRENT_USER.name || '';
+    document.getElementById('cEmail').value = document.getElementById('cEmail').value || window.CURRENT_USER.email || '';
+  }
   const s=sub(),d=del();
   document.getElementById('orderSummary').innerHTML=`
     ${items().map(i=>`<div class="order-row"><span>${i.name} ×${i.q}</span><span>₹${i.price*i.q}</span></div>`).join('')}

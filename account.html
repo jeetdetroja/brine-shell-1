@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Orders — Brine & Shell</title>
+  <meta name="description" content="View your Brine & Shell order history, track delivery status, and request a return." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://www.brineandshell.com/account.html" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="icon" type="image/png" href="images/brineandshell.png" />
+  <link rel="apple-touch-icon" href="images/brineandshell.png" />
+  <meta name="theme-color" content="#1C1B3A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<div class="page-hero">
+  <p class="eyebrow">Your Account</p>
+  <h1>My Orders</h1>
+  <p>Track a delivery or request a return on a past order.</p>
+</div>
+
+<div class="account-layout">
+  <div id="accountSignedOut" style="display:none; text-align:center; padding:40px 5%;">
+    <p style="margin-bottom:20px;color:var(--muted)">Sign in with Google to see your orders.</p>
+    <div id="acctGoogleBtn" class="gsi-btn-wrap" style="justify-content:center;display:flex;"></div>
+  </div>
+
+  <div id="accountSignedIn" style="display:none;">
+    <div class="orders-list" id="ordersList"></div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="overlay" id="orderOverlay">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeOrderModal()" aria-label="Close order detail">✕</button>
+    <p class="eyebrow">Order Detail</p>
+    <h2 id="odOrderId">—</h2>
+    <p class="wt" id="odDate"></p>
+
+    <div class="order-stepper" id="odStepper"></div>
+
+    <div class="order-summary" id="odItems"></div>
+
+    <div id="returnSection" style="margin-top:20px;">
+      <button class="btn-sm" id="odReturnBtn" onclick="toggleReturnForm()">Request a Return</button>
+      <div id="returnForm" style="display:none;margin-top:16px;">
+        <div class="form-group"><label>What's the issue?</label><textarea id="returnReason" placeholder="Describe the issue with this order..."></textarea></div>
+        <button class="form-submit" onclick="submitReturn()">Submit Return Request</button>
+        <div class="form-success" id="returnSuccess">✅ Return request submitted. We'll be in touch within 24 hours.</div>
+        <div class="form-error" id="returnError"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script>
+  window.PAGE = { active: '', cartNav: false };
+</script>
+<script src="js/auth.js"></script>
+<script src="js/partials.js"></script>
+<script>
+async function loadOrders() {
+  document.getElementById('accountSignedOut').style.display = 'none';
+  document.getElementById('accountSignedIn').style.display = 'block';
+  const list = document.getElementById('ordersList');
+  list.innerHTML = '<p style="text-align:center;color:var(--muted)">Loading your orders…</p>';
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/mine`, { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load your orders.');
+    if (!data.orders.length) {
+      list.innerHTML = '<p style="text-align:center;color:var(--muted)">No orders yet. <a href="shop.html" style="color:var(--navy);text-decoration:underline;">Start shopping →</a></p>';
+      return;
+    }
+    list.innerHTML = data.orders.map(o => `
+      <div class="order-card" onclick="openOrder('${o.orderId}')">
+        <div>
+          <div class="oc-id">${o.orderId}</div>
+          <div class="oc-meta">${formatDate(o.date)} · ${o.items}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="oc-status">${o.status || 'Order Placed'}</div>
+          <div class="oc-meta">₹${o.total}</div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    list.innerHTML = `<p style="text-align:center;color:#842029">${err.message}</p>`;
+  }
+}
+
+function formatDate(iso) {
+  try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch { return iso; }
+}
+
+let currentOrderId = null;
+
+async function openOrder(orderId) {
+  currentOrderId = orderId;
+  document.getElementById('odOrderId').textContent = orderId;
+  document.getElementById('odDate').textContent = '';
+  document.getElementById('odStepper').innerHTML = '';
+  document.getElementById('odItems').innerHTML = 'Loading…';
+  document.getElementById('returnForm').style.display = 'none';
+  document.getElementById('returnSuccess').style.display = 'none';
+  document.getElementById('returnError').style.display = 'none';
+  document.getElementById('orderOverlay').classList.add('open');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}`, { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load this order.');
+    document.getElementById('odDate').textContent = formatDate(data.order.date);
+    document.getElementById('odStepper').innerHTML = data.stages.map(s => `
+      <div class="step ${s.done ? 'done' : ''}">
+        <div class="step-dot">${s.done ? '✓' : ''}</div>
+        <div class="step-label">${s.label}</div>
+      </div>`).join('');
+    document.getElementById('odItems').innerHTML = `<div class="order-row"><span>${data.order.items}</span><span>₹${data.order.total}</span></div>`;
+  } catch (err) {
+    document.getElementById('odItems').innerHTML = `<p style="color:#842029">${err.message}</p>`;
+  }
+}
+
+function closeOrderModal() {
+  document.getElementById('orderOverlay').classList.remove('open');
+}
+
+function toggleReturnForm() {
+  const f = document.getElementById('returnForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitReturn() {
+  const reason = document.getElementById('returnReason').value.trim();
+  const err = document.getElementById('returnError');
+  const ok = document.getElementById('returnSuccess');
+  err.style.display = 'none';
+  ok.style.display = 'none';
+  if (!reason) {
+    err.textContent = 'Please describe the issue.';
+    err.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/returns`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: currentOrderId, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not submit your return request.');
+    ok.style.display = 'block';
+    document.getElementById('returnReason').value = '';
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+}
+
+document.getElementById('orderOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeOrderModal();
+});
+
+document.addEventListener('auth:changed', (e) => {
+  if (e.detail.user) {
+    loadOrders();
+  } else {
+    document.getElementById('accountSignedIn').style.display = 'none';
+    document.getElementById('accountSignedOut').style.display = 'block';
+    whenGoogleReady(() => renderGoogleButton('acctGoogleBtn'));
+  }
+});
+</script>
+</body>
+</html>
