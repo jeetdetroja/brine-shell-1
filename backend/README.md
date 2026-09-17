@@ -33,9 +33,14 @@ directly. Change a price in exactly one place.
 
 ### Google Sheet (stores orders, contact messages, newsletter emails)
 
-1. Create a new Google Sheet. Add three tabs named exactly `Orders`,
-   `Contact`, `Newsletter` (case-sensitive). Give each a header row,
-   e.g. `Orders`: `Order ID | Date | Status | Name | Email | Phone | Items | Total`.
+1. Create a new Google Sheet. Add four tabs named exactly `Orders`,
+   `Contact`, `Newsletter`, `Returns` (case-sensitive). Give each this
+   exact header row (order matters — the backend writes/reads by
+   column position, not by header name):
+   - `Orders`: `Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At`
+   - `Contact`: `Submitted At | First Name | Last Name | Email | Phone | Subject | Message`
+   - `Newsletter`: `Signed Up At | Email`
+   - `Returns`: `Requested At | Order ID | Customer Email | Items | Reason | Status`
 2. Go to [console.cloud.google.com](https://console.cloud.google.com),
    create a project, enable the **Google Sheets API**.
 3. Create a **Service Account** (IAM & Admin → Service Accounts →
@@ -66,7 +71,17 @@ directly. Change a price in exactly one place.
    Settings → API Keys, generate keys. Use the **test mode** keys
    (`rzp_test_...`) first.
 2. Put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `.env`.
-3. Switch to live keys only once you've tested a full order end to
+3. **Set up the webhook (do this once you have a public URL — after
+   deploying, or via a tunnel like ngrok for local testing):**
+   go to Settings → Webhooks → Add New Webhook. Set the URL to
+   `https://<yourdomain>/api/checkout/webhook`, tick the
+   `payment.captured` event, and paste the secret Razorpay generates
+   there into `RAZORPAY_WEBHOOK_SECRET` in `.env` — this is a
+   different secret from your API key secret. This webhook is what
+   marks an order paid even if the customer's browser closes right
+   after paying, instead of relying only on it making it back to the
+   site.
+4. Switch to live keys only once you've tested a full order end to
    end and the legal pages (Privacy/Terms/Refund Policy) are live —
    Razorpay generally requires those before enabling live payments.
 
@@ -106,7 +121,7 @@ Pass 2 added a **Fulfillment Status** column. Your `Orders` tab's
 header row (row 1) should read left to right:
 
 ```
-Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status
+Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At
 ```
 
 Also add a new tab named **Returns** with header row:

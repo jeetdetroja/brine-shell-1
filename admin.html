@@ -26,12 +26,16 @@
     .logout-btn { background: none; border: 1.5px solid var(--navy); color: var(--navy); padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600; }
     .logout-btn:hover { background: var(--navy); color: #fff; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--cream); text-transform: uppercase; font-size: 11px; letter-spacing: .4px; }
-    td { padding: 12px; border-bottom: 1px solid var(--cream); vertical-align: top; }
+    th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .4px; }
+    td { padding: 12px; vertical-align: top; }
     td.mono { font-family: monospace; font-size: 12px; }
     select { padding: 6px 10px; border-radius: 6px; border: 1.5px solid #ddd; font-size: 13px; font-family: inherit; background: var(--white); }
     .status-saved { color: #1e7e34; font-size: 11px; margin-left: 8px; display: none; }
     .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+    .stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-tile { flex: 1; min-width: 130px; background: var(--white); border-radius: 12px; padding: 16px 20px; box-shadow: 0 4px 24px rgba(28,27,58,.08); }
+    .stat-tile .num { font-size: 24px; font-weight: 700; color: var(--navy); line-height: 1.2; }
+    .stat-tile .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -53,6 +57,8 @@
     </div>
     <button class="logout-btn" onclick="adminLogout()">Sign Out</button>
   </div>
+  <div class="stats-row" id="statsRow"></div>
+
   <div class="card">
     <table id="ordersTable">
       <thead>
@@ -112,19 +118,37 @@ function showDashboard() {
 }
 
 async function loadOrders() {
-  const res = await fetch(`${API_BASE}/api/admin/orders`, { credentials: 'include' });
-  const data = await res.json();
-  if (!res.ok || !data.ok) return;
-  STAGES = data.stages || STAGES;
-
   const body = document.getElementById('ordersBody');
   const empty = document.getElementById('ordersEmpty');
+  let res, data;
+  try {
+    res = await fetch(`${API_BASE}/api/admin/orders`, { credentials: 'include' });
+    data = await res.json();
+  } catch (err) {
+    body.innerHTML = '';
+    empty.textContent = 'Could not reach the server. Is it running?';
+    empty.style.display = 'block';
+    renderStats([]);
+    return;
+  }
+  if (!res.ok || !data.ok) {
+    body.innerHTML = '';
+    empty.textContent = data?.error || 'Could not load orders — check the Google Sheets setup in .env.';
+    empty.style.display = 'block';
+    renderStats([]);
+    return;
+  }
+  STAGES = data.stages || STAGES;
+
   if (!data.orders.length) {
     body.innerHTML = '';
+    empty.textContent = 'No paid orders yet.';
     empty.style.display = 'block';
+    renderStats([]);
     return;
   }
   empty.style.display = 'none';
+  renderStats(data.orders);
   body.innerHTML = data.orders.map(o => `
     <tr>
       <td class="mono">${o.orderId}</td>
@@ -139,6 +163,25 @@ async function loadOrders() {
         <span class="status-saved" id="saved-${o.orderId}">✓ Saved</span>
       </td>
     </tr>`).join('');
+}
+
+// One glance = total order count + revenue + how many are sitting in
+// each stage, so the owner never has to count sheet rows by hand.
+function renderStats(orders) {
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+  const counts = {};
+  STAGES.forEach(s => counts[s] = 0);
+  orders.forEach(o => { const s = o.status || 'Order Placed'; counts[s] = (counts[s] || 0) + 1; });
+
+  const tiles = [
+    { label: 'Total Orders', num: totalOrders },
+    { label: 'Total Revenue', num: '₹' + totalRevenue.toLocaleString('en-IN') },
+    ...STAGES.map(s => ({ label: s, num: counts[s] || 0 })),
+  ];
+  document.getElementById('statsRow').innerHTML = tiles.map(t => `
+    <div class="stat-tile"><div class="num">${t.num}</div><div class="label">${t.label}</div></div>
+  `).join('');
 }
 
 async function updateStatus(orderId, selectEl) {

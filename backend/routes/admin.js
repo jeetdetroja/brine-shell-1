@@ -7,7 +7,7 @@ const { sendEmail } = require('../lib/resend');
 const { STAGES } = require('../lib/orderStatus');
 
 const router = express.Router();
-const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8 };
+const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8, deliveredAt: 9 };
 
 router.post('/login', (req, res) => {
   const { password } = req.body || {};
@@ -56,9 +56,16 @@ router.post('/orders/:orderId/status', requireAdmin, async (req, res) => {
     return res.status(400).json({ ok: false, error: `Status must be one of: ${STAGES.join(', ')}` });
   }
 
+  // Stamp the exact date/time only when the order actually reaches
+  // "Delivered" — that's the timestamp customers see on their order.
+  const updates = { I: status };
+  if (status === 'Delivered') {
+    updates.J = new Date().toISOString();
+  }
+
   let updated;
   try {
-    updated = await updateRowByKey('Orders', req.params.orderId, { I: status });
+    updated = await updateRowByKey('Orders', req.params.orderId, updates);
   } catch (err) {
     console.error('Sheets update failed (admin status):', err.message);
     return res.status(502).json({ ok: false, error: 'Could not update that order right now.' });

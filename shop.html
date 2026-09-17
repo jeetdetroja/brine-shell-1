@@ -49,6 +49,14 @@
       <button class="cart-checkout-btn" onclick="openCheckout()">Proceed to Pay</button>
       <p class="pay-note">🔒 Secured by Razorpay · UPI · Cards · PhonePe · Google Pay</p>
     </div>
+
+    <div id="wishlistSection" style="display:none;margin-top:28px">
+      <h3>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1C1B3A" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        Saved for Later
+      </h3>
+      <div id="wishlistBody"></div>
+    </div>
   </aside>
 </div>
 
@@ -85,12 +93,16 @@
 </script>
 <script src="js/auth.js"></script>
 <script src="js/partials.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/wishlist.js"></script>
 <script>
 /* PRODUCTS and SITE_CONFIG now come from js/products.js — the single
    source of truth shared with index.html. Do not redefine them here. */
 
-/* ── CART ── */
-let cart = {};
+/* ── CART ──
+   Backed by localStorage (js/cart.js) so it survives page reloads —
+   including clicking the "Cart" nav link itself. */
+let cart = getCart();
 
 function sub() { return Object.entries(cart).reduce((s,[id,q])=>s+(PRODUCTS.find(p=>p.id===id).price*q),0); }
 function del() { const s=sub(); return s===0?0:s>=SITE_CONFIG.freeDeliveryThreshold?0:SITE_CONFIG.deliveryFee; }
@@ -123,6 +135,7 @@ function renderProducts() {
 
 function add(id) {
   cart[id]=(cart[id]||0)+1;
+  saveCart(cart);
   document.getElementById(`qn-${id}`).textContent=cart[id];
   document.getElementById(`atc-${id}`).style.display='none';
   document.getElementById(`qc-${id}`).style.display='flex';
@@ -131,6 +144,7 @@ function add(id) {
 
 function chg(id,d) {
   cart[id]=Math.max(0,(cart[id]||0)+d);
+  saveCart(cart);
   document.getElementById(`qn-${id}`).textContent=cart[id];
   if(cart[id]===0){ document.getElementById(`atc-${id}`).style.display=''; document.getElementById(`qc-${id}`).style.display='none'; }
   renderCart();
@@ -146,8 +160,20 @@ function renderCart() {
   document.getElementById('cartFooter').style.display='block';
   document.getElementById('cartBody').innerHTML=list.map(i=>`
     <div class="cart-item">
-      <div><div class="cart-item-name">${i.name}</div><div class="cart-item-meta">₹${i.price} × ${i.q}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <img src="${i.img}" alt="" class="cart-item-img" onerror="this.style.display='none'" />
+        <div style="min-width:0"><div class="cart-item-name">${i.name}</div><div class="cart-item-meta">₹${i.price} × ${i.q}</div></div>
+      </div>
       <div style="display:flex;align-items:center;gap:6px"><span class="cart-item-price">₹${i.price*i.q}</span><button class="cart-remove" onclick="chg('${i.id}',-${i.q})" aria-label="Remove ${i.name} from cart">×</button></div>
+    </div>
+    <div class="cart-item-actions">
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="chg('${i.id}',-1)" aria-label="Decrease quantity of ${i.name}">−</button>
+        <span class="qty-num">${i.q}</span>
+        <button class="qty-btn" onclick="chg('${i.id}',1)" aria-label="Increase quantity of ${i.name}">+</button>
+      </div>
+      <button class="cart-action-link" onclick="saveForLater('${i.id}')">Save for later</button>
+      <button class="cart-action-link" onclick="shareProduct('${i.id}')">Share</button>
     </div>`).join('');
   const s=sub(),d=del();
   document.getElementById('cartSub').textContent=`₹${s}`;
@@ -155,16 +181,104 @@ function renderCart() {
   document.getElementById('cartGrand').textContent=`₹${s+d}`;
 }
 
+function syncCartUI() {
+  Object.entries(cart).forEach(([id, q]) => {
+    if (q > 0) {
+      const qn = document.getElementById(`qn-${id}`);
+      const atc = document.getElementById(`atc-${id}`);
+      const qc = document.getElementById(`qc-${id}`);
+      if (qn) qn.textContent = q;
+      if (atc) atc.style.display = 'none';
+      if (qc) qc.style.display = 'flex';
+    }
+  });
+}
+
+function saveForLater(id) {
+  // Moves the item out of the active cart and into the wishlist —
+  // same underlying stores (js/cart.js + js/wishlist.js), so this is
+  // just "remove from one, add to the other."
+  delete cart[id];
+  saveCart(cart);
+  addToWishlist(id);
+  const atc = document.getElementById(`atc-${id}`), qc = document.getElementById(`qc-${id}`);
+  if (atc) atc.style.display = '';
+  if (qc) qc.style.display = 'none';
+  renderCart();
+  renderWishlist();
+}
+
+function moveToCart(id) {
+  cart[id] = (cart[id] || 0) + 1;
+  saveCart(cart);
+  removeFromWishlist(id);
+  const qn = document.getElementById(`qn-${id}`), atc = document.getElementById(`atc-${id}`), qc = document.getElementById(`qc-${id}`);
+  if (qn) qn.textContent = cart[id];
+  if (atc) atc.style.display = 'none';
+  if (qc) qc.style.display = 'flex';
+  renderCart();
+  renderWishlist();
+}
+
+function removeWishlistItem(id) {
+  removeFromWishlist(id);
+  renderWishlist();
+}
+
+function renderWishlist() {
+  const list = getWishlist().map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+  const section = document.getElementById('wishlistSection');
+  const body = document.getElementById('wishlistBody');
+  if (!list.length) { section.style.display = 'none'; body.innerHTML = ''; return; }
+  section.style.display = 'block';
+  body.innerHTML = list.map(p => `
+    <div class="cart-item">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <img src="${p.img}" alt="" class="cart-item-img" onerror="this.style.display='none'" />
+        <div style="min-width:0"><div class="cart-item-name">${p.name}</div><div class="cart-item-meta">₹${p.price}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn-sm" style="padding:7px 16px;font-size:12px" onclick="moveToCart('${p.id}')">Move to Cart</button>
+        <button class="cart-remove" onclick="removeWishlistItem('${p.id}')" aria-label="Remove ${p.name} from wishlist">×</button>
+      </div>
+    </div>`).join('');
+}
+
+/* Native share sheet when the browser/device supports it (mobile
+   Safari/Chrome, some desktop browsers); otherwise falls back to
+   copying a shareable product link to the clipboard. */
+async function shareProduct(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  const url = `${location.origin}${location.pathname}?product=${p.id}`;
+  const shareData = { title: `${p.name} — Brine & Shell`, text: p.desc, url };
+  if (navigator.share) {
+    try { await navigator.share(shareData); } catch { /* user cancelled the share sheet — not an error */ }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    alert('Link copied! Paste it anywhere to share this product.');
+  } catch {
+    prompt('Copy this link to share:', url);
+  }
+}
+
 /* ── CHECKOUT ── */
 function openCheckout() {
   if(!items().length) return;
+  // Just a convenience prefill -- freely editable either way. The
+  // server separately tracks the signed-in account's own email
+  // (Account Email) purely to match orders back to "My Orders", so
+  // changing this contact email can never make an order disappear
+  // from your account.
   if (window.CURRENT_USER) {
     document.getElementById('cName').value = document.getElementById('cName').value || window.CURRENT_USER.name || '';
     document.getElementById('cEmail').value = document.getElementById('cEmail').value || window.CURRENT_USER.email || '';
   }
   const s=sub(),d=del();
   document.getElementById('orderSummary').innerHTML=`
-    ${items().map(i=>`<div class="order-row"><span>${i.name} ×${i.q}</span><span>₹${i.price*i.q}</span></div>`).join('')}
+    ${items().map(i=>`<div class="order-row"><span style="display:flex;align-items:center;gap:8px;min-width:0"><img src="${i.img}" alt="" class="order-row-img" onerror="this.style.display='none'" />${i.name} ×${i.q}</span><span>₹${i.price*i.q}</span></div>`).join('')}
     <div class="order-row"><span>Delivery</span><span>${d===0?'FREE':'₹'+d}</span></div>
     <div class="order-row total"><span>Total</span><span>₹${s+d}</span></div>`;
   document.getElementById('overlay').classList.add('open');
@@ -227,6 +341,7 @@ async function initiateRazorpay() {
           if (!verifyRes.ok || !verifyData.ok) throw new Error('verification failed');
           closeCheckout();
           cart={};
+          saveCart(cart);
           renderProducts();
           renderCart();
           const t=document.getElementById('toast');
@@ -249,7 +364,7 @@ async function initiateRazorpay() {
 
 /* ── INIT ── */
 document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeCheckout(); });
-document.addEventListener('DOMContentLoaded', async ()=>{ await window.PRODUCTS_READY; renderProducts(); renderCart(); });
+document.addEventListener('DOMContentLoaded', async ()=>{ await window.PRODUCTS_READY; renderProducts(); syncCartUI(); renderCart(); renderWishlist(); });
 </script>
 </body>
 </html>

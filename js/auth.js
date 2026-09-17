@@ -42,10 +42,31 @@ function renderAuthUI(containerId) {
         </div>
       </div>`;
   } else {
-    el.innerHTML = `<div id="${containerId}-gbtn" class="gsi-btn-wrap"></div>`;
+    el.innerHTML = `
+      <div class="auth-chip signin-trigger" tabindex="0"
+           onclick="toggleSigninMenu(event)"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSigninMenu(event);}">
+        Sign in
+        <div class="auth-menu signin-menu">
+          <div class="signin-menu-hint">Sign in to view your orders</div>
+          <div id="${containerId}-gbtn" class="gsi-btn-wrap"></div>
+        </div>
+      </div>`;
     whenGoogleReady(() => renderGoogleButton(`${containerId}-gbtn`));
   }
 }
+
+function toggleSigninMenu(e) {
+  e.stopPropagation();
+  const chip = e.currentTarget;
+  const wasOpen = chip.classList.contains('menu-open');
+  document.querySelectorAll('.signin-trigger.menu-open').forEach(c => c.classList.remove('menu-open'));
+  if (!wasOpen) chip.classList.add('menu-open');
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.signin-trigger.menu-open').forEach(c => c.classList.remove('menu-open'));
+});
 
 function renderAllAuthUI() {
   renderAuthUI('navAuth');
@@ -58,7 +79,7 @@ function renderGoogleButton(elId) {
     if (el) el.innerHTML = '<span class="gsi-not-configured">Sign-in not configured yet</span>';
     return;
   }
-  google.accounts.id.renderButton(el, { theme: 'outline', size: 'medium', text: 'signin_with', shape: 'pill' });
+  google.accounts.id.renderButton(el, { theme: 'filled_black', size: 'medium', text: 'continue_with', shape: 'pill', width: 230 });
 }
 
 async function handleGoogleCredential(response) {

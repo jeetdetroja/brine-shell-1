@@ -1,17 +1,57 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { priceCart } = require('../lib/catalog');
-const { createOrder, verifySignature, getKeyId } = require('../lib/razorpay');
-const { appendRow, updateRowByKey } = require('../lib/sheets');
+const { createOrder, verifySignature, verifyWebhookSignature, getKeyId } = require('../lib/razorpay');
+const { appendRow, updateRowByKey, getRows } = require('../lib/sheets');
 const { sendEmail } = require('../lib/resend');
+const { COOKIE_NAME, verifySession } = require('../lib/auth');
 
 const router = express.Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Scoped to the customer-facing endpoints only — deliberately NOT
+// applied to /webhook below, which is server-to-server traffic from
+// Razorpay's own infrastructure and shouldn't share a rate-limit
+// bucket with browser checkout attempts.
+const checkoutLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 40 });
+
+// Orders sheet columns, same layout routes/orders.js and admin.js use.
+const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8 };
+
+/* The single place that flips an order to "paid" — called from BOTH
+   the browser's /verify request and the /webhook route below, so
+   whichever one arrives first does the work and the other becomes a
+   no-op. Without this idempotency check, a customer whose browser
+   completes /verify AND whose payment also triggers a webhook
+   delivery would get two confirmation emails for one order. */
+async function markOrderPaid(orderId, paymentId) {
+  const rows = await getRows('Orders');
+  const row = rows.slice(1).find(r => r[COL.id] === orderId);
+  if (!row) return { found: false };
+  if (row[COL.paymentStatus] === 'paid') return { found: true, alreadyPaid: true };
+
+  await updateRowByKey('Orders', orderId, { C: 'paid', I: 'Order Placed' });
+
+  const email = row[COL.email];
+  if (email && EMAIL_RE.test(email)) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Your Brine & Shell order is confirmed',
+        html: `<p>Thanks for your order! Payment reference: <strong>${paymentId}</strong>.</p><p>We'll be in touch with delivery updates.</p>`,
+      });
+    } catch (err) {
+      console.error('Email send failed (order confirmation):', err.message);
+    }
+  }
+  return { found: true, alreadyPaid: false };
+}
 
 /* Step 1: browser sends { items: [{id, qty}], customer: {name, email, phone} }.
    We price the cart ourselves from data/products.json — the amount
    the browser thinks the total is never gets trusted — then ask
    Razorpay to create an order for that (server-computed) amount. */
-router.post('/create-order', async (req, res) => {
+router.post('/create-order', checkoutLimiter, async (req, res) => {
   const { items, customer } = req.body || {};
   const name = String(customer?.name || '').trim().slice(0, 120);
   const email = String(customer?.email || '').trim().slice(0, 200);
@@ -26,6 +66,16 @@ router.post('/create-order', async (req, res) => {
   if (phone.replace(/\D/g, '').length !== 10) {
     return res.status(400).json({ ok: false, error: 'Enter a valid 10-digit phone number.' });
   }
+
+  // "Email" (typed above) is contact info for THIS order and stays
+  // whatever the customer enters -- it's fine for that to differ from
+  // their account. "Account Email" is separate: it's only ever the
+  // signed-in session's own email (blank for guest checkout), and it's
+  // the ONLY thing "My Orders" matches against, so editing the contact
+  // email can never make a real order invisible to its own account.
+  const sessionToken = req.cookies?.[COOKIE_NAME];
+  const sessionUser = sessionToken && verifySession(sessionToken);
+  const accountEmail = sessionUser ? sessionUser.email.toLowerCase() : '';
 
   let priced;
   try {
@@ -50,7 +100,7 @@ router.post('/create-order', async (req, res) => {
 
   try {
     // Column order matches the Orders sheet header:
-    // Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status
+    // Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email
     await appendRow('Orders', [
       order.id,
       new Date().toISOString(),
@@ -61,6 +111,8 @@ router.post('/create-order', async (req, res) => {
       priced.lineItems.map(i => `${i.name} x${i.qty}`).join('; '),
       priced.total,
       '', // fulfillment status is set once payment is verified
+      '', // delivered-at timestamp, filled in only once status reaches "Delivered"
+      accountEmail, // signed-in account's email, if any -- used only to match "My Orders"
     ]);
   } catch (err) {
     console.error('Sheets append failed (order):', err.message);
@@ -81,8 +133,8 @@ router.post('/create-order', async (req, res) => {
    sends back the payment id + signature. We verify the signature
    ourselves (never trust "it worked" from the client alone) before
    marking the order paid and emailing a confirmation. */
-router.post('/verify', async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customerEmail } = req.body || {};
+router.post('/verify', checkoutLimiter, async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ ok: false, error: 'Missing payment verification fields.' });
@@ -100,23 +152,52 @@ router.post('/verify', async (req, res) => {
   }
 
   try {
-    await updateRowByKey('Orders', razorpay_order_id, { C: 'paid', I: 'Order Placed' });
+    await markOrderPaid(razorpay_order_id, razorpay_payment_id);
   } catch (err) {
     console.error('Sheets update failed (order verify):', err.message);
+    // The signature is genuinely valid at this point — payment succeeded
+    // even though we couldn't record it. The webhook below is the
+    // backstop that will still catch this and mark it paid once Sheets
+    // is reachable again.
   }
 
-  if (customerEmail && EMAIL_RE.test(customerEmail)) {
+  res.json({ ok: true });
+});
+
+/* Server-to-server backstop. Configured once in the Razorpay
+   dashboard (Settings -> Webhooks) with this URL and a secret you
+   generate there — a DIFFERENT secret from RAZORPAY_KEY_SECRET.
+   Razorpay calls this directly from its own servers the moment a
+   payment is captured, regardless of whether the customer's browser
+   ever made it back to /verify (closed the tab, lost connection,
+   phone died mid-redirect, etc.). This is what makes "payment
+   succeeded but our records say pending" structurally impossible
+   instead of just unlikely. */
+router.post('/webhook', async (req, res) => {
+  const signature = req.headers['x-razorpay-signature'];
+  if (!signature || !req.rawBody || !verifyWebhookSignature({ rawBody: req.rawBody, signature })) {
+    console.error('Webhook signature verification failed');
+    return res.status(400).json({ ok: false, error: 'Invalid signature.' });
+  }
+
+  const event = req.body?.event;
+  const payment = req.body?.payload?.payment?.entity;
+
+  if (event === 'payment.captured' && payment?.order_id) {
     try {
-      await sendEmail({
-        to: customerEmail,
-        subject: 'Your Brine & Shell order is confirmed',
-        html: `<p>Thanks for your order! Payment reference: <strong>${razorpay_payment_id}</strong>.</p><p>We'll be in touch with delivery updates.</p>`,
-      });
+      const result = await markOrderPaid(payment.order_id, payment.id);
+      console.log(`Webhook: payment.captured for ${payment.order_id}`, result.alreadyPaid ? '(already marked paid — no-op)' : '(marked paid)');
     } catch (err) {
-      console.error('Email send failed (order confirmation):', err.message);
+      console.error('Webhook: could not mark order paid:', err.message);
+      // Return 500 so Razorpay retries this delivery automatically —
+      // it retries failed webhooks on a backoff schedule for a while.
+      return res.status(500).json({ ok: false });
     }
   }
 
+  // Always 200 for anything else (events we don't act on) — Razorpay
+  // treats a non-2xx as "retry me," which we only want for real
+  // processing failures above.
   res.json({ ok: true });
 });
 

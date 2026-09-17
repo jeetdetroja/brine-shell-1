@@ -28,7 +28,37 @@ function verifySignature({ orderId, paymentId, signature }) {
     .createHmac('sha256', key_secret)
     .update(`${orderId}|${paymentId}`)
     .digest('hex');
-  return expected === signature;
+  return timingSafeEqualHex(expected, signature);
 }
 
-module.exports = { createOrder, verifySignature, getKeyId: () => process.env.RAZORPAY_KEY_ID };
+/* Verifies a webhook delivery from Razorpay's servers (Settings ->
+   Webhooks in the dashboard) against a SEPARATE secret you set there
+   — not the API key secret. This is the reliable backstop: unlike
+   the browser-driven /verify call above, this fires even if the
+   customer closes the tab right after paying, so a payment can never
+   go recorded-as-paid-at-Razorpay-but-still-"pending"-in-our-sheet
+   just because the browser didn't stick around. */
+function verifyWebhookSignature({ rawBody, signature }) {
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!webhookSecret) return false;
+  const expected = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex');
+  return timingSafeEqualHex(expected, signature);
+}
+
+// Constant-time comparison — a plain === on signatures would leak
+// timing information an attacker could use to guess the correct
+// value one byte at a time.
+function timingSafeEqualHex(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+}
+
+module.exports = {
+  createOrder,
+  verifySignature,
+  verifyWebhookSignature,
+  getKeyId: () => process.env.RAZORPAY_KEY_ID,
+};
