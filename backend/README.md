@@ -9,24 +9,28 @@ the browser.
 
 ```
 backend/
-  server.js            Express app, mounts the three route groups
-  routes/
+  server.js            Application entry point
+  src/
+    app.js              Express app, mounts the route groups
+    config/             Application settings
+    controllers/        Request/response handlers
+    middleware/         Authentication, limits, and errors
+    routes/
     contact.js          POST /api/contact
     newsletter.js        POST /api/newsletter
     checkout.js           POST /api/checkout/create-order
                           POST /api/checkout/verify
-  lib/
-    catalog.js           reads ../data/products.json — the ONE
+    services/           External service integrations
+    utils/
+      catalog.util.js    reads frontend/public/data/products.json — the ONE
                           place prices live, shared with the frontend
-    razorpay.js           order creation + HMAC signature verification
-    resend.js              transactional email
-    sheets.js               appends/updates rows in a Google Sheet
+  scripts/              One-off maintenance scripts
   .env.example           copy to .env and fill in (never commit .env)
 ```
 
-`data/products.json` (one level up, at the site root) is the single
+`frontend/public/data/products.json` is the single
 source of truth for product names/prices/descriptions. The frontend
-(`js/products.js`) fetches it at runtime; the backend `require()`s it
+(`frontend/public/assets/js/products.js`) fetches it at runtime; the backend `require()`s it
 directly. Change a price in exactly one place.
 
 ## 1. Set up the accounts you'll need
@@ -109,7 +113,7 @@ account for Sheets access; this one lets real customers sign in.
 5. Copy the generated **Client ID** (ends in
    `.apps.googleusercontent.com`):
    - Put it in `GOOGLE_CLIENT_ID` in `backend/.env`.
-   - Also put it in `js/config.js` as `window.GOOGLE_CLIENT_ID` — this
+   - Also put it in `frontend/public/assets/js/config.js` as `window.GOOGLE_CLIENT_ID` — this
      one is *meant* to be public, it's not a secret, just an
      identifier telling Google which app is asking.
 6. Reload the site — the nav should now show a real "Sign in with
@@ -162,7 +166,7 @@ not a bare VPS — so there's no PM2 or Nginx config to write by hand:
 
 1. Get the code onto the server: either connect the repo via
    hPanel's Git integration (hPanel → your website → Git), or upload
-   the `backend/` folder with the File Manager / FTP.
+   both `backend/` and `frontend/` with the File Manager / FTP.
 2. In hPanel, go to your website → **Advanced → Node.js**.
 3. Click **Create Application**:
    - **Node.js version:** 18 or newer.
@@ -172,7 +176,7 @@ not a bare VPS — so there's no PM2 or Nginx config to write by hand:
      `www.brineandshell.com` (same domain, e.g. under `/api`) or a
      subdomain like `api.brineandshell.com`. Same domain is simplest
      — no CORS configuration needed. If you use a subdomain, set
-     `js/config.js`'s `API_BASE` on the frontend to that subdomain's
+     `frontend/public/assets/js/config.js`'s `API_BASE` on the frontend to that subdomain's
      URL, and set `ALLOWED_ORIGIN` in `.env` to your main domain.
 4. In the same Node.js app screen, add each variable from your `.env`
    file under **Environment variables** (hPanel stores these itself —
@@ -214,7 +218,7 @@ should return a real Razorpay `orderId` once test keys are in `.env`.
   and you'll see every paid order with a status dropdown. Changing it
   emails the customer automatically.
 - Visit any page — once `GOOGLE_CLIENT_ID` is set in both `.env` and
-  `js/config.js`, the nav shows a real "Sign in with Google" button.
+  `frontend/public/assets/js/config.js`, the nav shows a real "Sign in with Google" button.
   After signing in, it shows the customer's name/email instead, with
   a dropdown for **My Orders** and **Sign Out**.
 - `/account.html` lists the signed-in customer's paid orders (matched
@@ -232,7 +236,7 @@ cp .env.example .env   # fill in test-mode values
 npm run dev
 ```
 
-The frontend pages call the API at whatever `js/config.js`'s
+The frontend pages call the API at whatever `frontend/public/assets/js/config.js`'s
 `API_BASE` says — leave it as `''` for same-origin, or point it at
 `http://localhost:3000` while testing locally (and set `ALLOWED_ORIGIN`
 in `.env` to match wherever you're opening the HTML from).
