@@ -35,3 +35,21 @@ function getCartCount(cart) {
   const source = cart || getCart();
   return Object.values(source).reduce((sum, q) => sum + (Number(q) || 0), 0);
 }
+
+/* Keeps the nav's cart badge (id="cartBadge") in sync wherever it
+   exists. shop.html's own renderCart() also touches the badge as
+   part of drawing the full cart drawer -- that's harmless overlap.
+   This is what makes the badge work on pages (like the homepage)
+   that show a live count but have no drawer of their own. The badge
+   itself only renders in the header when a page sets cartNav:true
+   (js/partials.js), and it's injected after partials.js builds the
+   header, hence syncing again on 'partials:ready'. */
+function syncCartBadge() {
+  const badge = document.getElementById('cartBadge');
+  if (!badge) return;
+  const count = getCartCount();
+  badge.textContent = count;
+  badge.style.display = count ? 'inline' : 'none';
+}
+document.addEventListener('cart:changed', syncCartBadge);
+document.addEventListener('partials:ready', syncCartBadge);

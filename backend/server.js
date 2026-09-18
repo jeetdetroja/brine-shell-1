@@ -11,6 +11,9 @@ const checkoutRoute = require('./routes/checkout');
 const authRoute = require('./routes/auth');
 const ordersRoute = require('./routes/orders');
 const returnsRoute = require('./routes/returns');
+const profileRoute = require('./routes/profile');
+const addressesRoute = require('./routes/addresses');
+const reviewsRoute = require('./routes/reviews');
 const adminRoute = require('./routes/admin');
 
 const app = express();
@@ -50,6 +53,9 @@ app.use('/api/checkout', checkoutRoute);
 app.use('/api/auth', authLimiter, authRoute);
 app.use('/api/orders', formLimiter, ordersRoute);
 app.use('/api/returns', formLimiter, returnsRoute);
+app.use('/api/profile', formLimiter, profileRoute);
+app.use('/api/addresses', formLimiter, addressesRoute);
+app.use('/api/reviews', formLimiter, reviewsRoute);
 app.use('/api/admin/login', adminLoginLimiter);
 app.use('/api/admin', adminRoute);
 
@@ -64,7 +70,20 @@ app.use((err, req, res, next) => {
 // is explicitly blocked first so .env, node_modules, etc. are never
 // web-accessible.
 app.use('/backend', (req, res) => res.status(404).end());
-app.use(express.static(path.join(__dirname, '..'), { dotfiles: 'ignore' }));
+// no-store on the page files themselves (html/js/css) -- without this,
+// browsers will sometimes keep serving an already-open page's OLD
+// version of orders.html/admin.html/etc after an edit here, making a
+// real code change look like it "isn't reflecting" when it's really
+// just a stale cached copy. Images/uploads aren't affected -- those
+// are fine to cache normally.
+app.use(express.static(path.join(__dirname, '..'), {
+  dotfiles: 'ignore',
+  setHeaders: (res, filePath) => {
+    if (/\.(html|js|css)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  },
+}));
 
 app.listen(PORT, () => {
   console.log(`Brine & Shell API listening on port ${PORT}`);

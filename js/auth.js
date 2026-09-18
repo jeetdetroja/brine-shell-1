@@ -37,7 +37,8 @@ function renderAuthUI(containerId) {
         <span class="auth-name">${user.name}</span>
         <div class="auth-menu">
           <div class="auth-menu-email">${user.email}</div>
-          <a href="account.html">My Orders</a>
+          <a href="account.html">My Profile</a>
+          <a href="orders.html">My Orders</a>
           <button type="button" onclick="signOut()">Sign Out</button>
         </div>
       </div>`;

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Orders — Brine & Shell</title>
-  <meta name="description" content="View your Brine & Shell order history, track delivery status, and request a return." />
+  <title>My Profile | Brine & Shell</title>
+  <meta name="description" content="Manage your Brine & Shell profile and saved delivery addresses." />
   <meta name="robots" content="noindex" />
   <link rel="canonical" href="https://www.brineandshell.com/account.html" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -22,43 +22,72 @@
 
 <div class="page-hero">
   <p class="eyebrow">Your Account</p>
-  <h1>My Orders</h1>
-  <p>Track a delivery or request a return on a past order.</p>
+  <h1>My Profile</h1>
+  <p>Your contact details and saved delivery addresses, kept under whichever Google account you're signed in with.</p>
 </div>
 
 <div class="account-layout">
   <div id="accountSignedOut" style="display:none; text-align:center; padding:40px 5%;">
-    <p style="margin-bottom:20px;color:var(--muted)">Sign in with Google to see your orders.</p>
+    <p style="margin-bottom:20px;color:var(--muted)">Sign in with Google to manage your profile.</p>
     <div id="acctGoogleBtn" class="gsi-btn-wrap" style="justify-content:center;display:flex;"></div>
   </div>
 
   <div id="accountSignedIn" style="display:none;">
-    <div class="orders-list" id="ordersList"></div>
-  </div>
-</div>
 
-<!-- ORDER DETAIL MODAL -->
-<div class="overlay" id="orderOverlay">
-  <div class="modal" style="max-width:560px;">
-    <button class="modal-close" onclick="closeOrderModal()" aria-label="Close order detail">✕</button>
-    <p class="eyebrow">Order Detail</p>
-    <h2 id="odOrderId">—</h2>
-    <p class="wt" id="odDate"></p>
-
-    <div class="order-stepper" id="odStepper"></div>
-    <p class="wt" id="odDelivered" style="color:var(--gold-lt,#8a6d2f);font-weight:600;"></p>
-
-    <div class="order-summary" id="odItems"></div>
-
-    <div id="returnSection" style="margin-top:20px;">
-      <button class="btn-sm" id="odReturnBtn" onclick="toggleReturnForm()">Request a Return</button>
-      <div id="returnForm" style="display:none;margin-top:16px;">
-        <div class="form-group"><label>What's the issue?</label><textarea id="returnReason" placeholder="Describe the issue with this order..."></textarea></div>
-        <button class="form-submit" onclick="submitReturn()">Submit Return Request</button>
-        <div class="form-success" id="returnSuccess">✅ Return request submitted. We'll be in touch within 24 hours.</div>
-        <div class="form-error" id="returnError"></div>
+    <!-- PROFILE -->
+    <div class="profile-card">
+      <div class="profile-card-head">
+        <h3>Profile</h3>
+        <button class="cart-action-link" id="profileToggleBtn" onclick="toggleProfileForm()">Edit</button>
+      </div>
+      <div id="profileView" class="profile-view">
+        <p><strong>Email</strong><span id="pvEmail"></span></p>
+        <p><strong>Name</strong><span id="pvName">Not saved yet</span></p>
+        <p><strong>Phone</strong><span id="pvPhone">Not saved yet</span></p>
+      </div>
+      <div id="profileForm" style="display:none;margin-top:14px;">
+        <div class="form-group"><label>Name *</label><input type="text" id="pfName" placeholder="Riya Sharma" /></div>
+        <div class="form-group"><label>Phone *</label><input type="tel" id="pfPhone" placeholder="9876543210" maxlength="10" /></div>
+        <button class="form-submit" onclick="saveProfile()">Save Profile</button>
+        <div class="form-success" id="profileSuccess">Profile saved.</div>
+        <div class="form-error" id="profileError"></div>
       </div>
     </div>
+
+    <!-- SAVED ADDRESSES -->
+    <div class="profile-card">
+      <div class="profile-card-head">
+        <h3>Address Book</h3>
+        <button class="cart-action-link" id="addressToggleBtn" onclick="toggleAddressForm()">+ Add Address</button>
+      </div>
+      <div id="addressList"><p style="color:var(--muted);font-size:14px">Loading…</p></div>
+      <div id="addressForm" style="display:none;margin-top:14px;">
+        <div class="form-group">
+          <label>Label *</label>
+          <div class="label-choice-group" id="afLabelGroup">
+            <button type="button" class="label-choice" data-label="Home" onclick="selectAddressLabel('Home')">Home</button>
+            <button type="button" class="label-choice" data-label="Work" onclick="selectAddressLabel('Work')">Work</button>
+            <button type="button" class="label-choice" data-label="Other" onclick="selectAddressLabel('Other')">Other</button>
+            <button type="button" class="label-choice-add" title="Add a custom address" onclick="selectAddressLabel('Other')">+</button>
+          </div>
+          <input type="text" id="afLabelOther" placeholder="Name this address, e.g. Mom's Place" maxlength="60" style="display:none;margin-top:10px;" />
+        </div>
+        <div class="form-group"><label>Recipient Name *</label><input type="text" id="afRecipient" placeholder="Who should we deliver this to?" /></div>
+        <div class="form-group"><label>Phone *</label><input type="tel" id="afPhone" placeholder="9876543210" maxlength="10" /></div>
+        <div class="form-group"><label>Address *</label><textarea id="afAddress" class="address-textarea" placeholder="House no., street, area" rows="2" maxlength="160" oninput="capAddressWords(this)"></textarea></div>
+        <div class="form-group"><label>State *</label><select id="afState" onchange="onAddressStateChange()"><option value="">Select State</option></select></div>
+        <div class="form-group">
+          <label>City *</label>
+          <select id="afCity" onchange="onAddressCityChange()" disabled><option value="">Select state first</option></select>
+          <input type="text" id="afCityOther" placeholder="Type your city" maxlength="60" style="display:none;margin-top:10px;" />
+        </div>
+        <div class="form-group"><label>PIN Code *</label><input type="text" id="afPincode" placeholder="560001" maxlength="6" inputmode="numeric" /></div>
+        <button class="form-submit" onclick="saveAddress()">Save Address</button>
+        <div class="form-success" id="addressSuccess">Address saved.</div>
+        <div class="form-error" id="addressError"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -66,135 +95,254 @@
 
 <script src="js/config.js"></script>
 <script src="js/products.js"></script>
+<script src="js/india-locations.js"></script>
 <script>
   window.PAGE = { active: '', cartNav: false };
 </script>
 <script src="js/auth.js"></script>
 <script src="js/partials.js"></script>
 <script>
-async function loadOrders() {
-  document.getElementById('accountSignedOut').style.display = 'none';
-  document.getElementById('accountSignedIn').style.display = 'block';
-  const list = document.getElementById('ordersList');
-  list.innerHTML = '<p style="text-align:center;color:var(--muted)">Loading your orders…</p>';
+/* ── PROFILE (name + phone -- the account holder's own contact info,
+   saved against whichever Google account they're signed in with) ── */
+function toggleProfileForm() {
+  const view = document.getElementById('profileView');
+  const form = document.getElementById('profileForm');
+  const showingForm = form.style.display !== 'none';
+  view.style.display = showingForm ? 'block' : 'none';
+  form.style.display = showingForm ? 'none' : 'block';
+  document.getElementById('profileToggleBtn').textContent = showingForm ? 'Edit' : 'Cancel';
+}
+
+async function loadProfile() {
+  document.getElementById('pvEmail').textContent = window.CURRENT_USER?.email || '';
   try {
-    const res = await fetch(`${API_BASE}/api/orders/mine`, { credentials: 'include' });
+    const res = await fetch(`${API_BASE}/api/profile`, { credentials: 'include' });
     const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load your orders.');
-    if (!data.orders.length) {
-      list.innerHTML = '<p style="text-align:center;color:var(--muted)">No orders yet. <a href="shop.html" style="color:var(--navy);text-decoration:underline;">Start shopping →</a></p>';
-      return;
-    }
-    list.innerHTML = data.orders.map(o => `
-      <div class="order-card" onclick="openOrder('${o.orderId}')">
-        <div>
-          <div class="oc-id">${o.orderId}</div>
-          <div class="oc-meta">${formatDate(o.date)} · ${o.items}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="oc-status">${o.status || 'Order Placed'}</div>
-          ${o.deliveredAt
-            ? `<div class="oc-meta">Delivered ${formatDateTime(o.deliveredAt)}</div>`
-            : `<div class="oc-meta">₹${o.total}</div>`}
-        </div>
-      </div>`).join('');
-  } catch (err) {
-    list.innerHTML = `<p style="text-align:center;color:#842029">${err.message}</p>`;
+    if (!res.ok || !data.ok) throw new Error();
+    document.getElementById('pvName').textContent = data.profile.name || 'Not saved yet';
+    document.getElementById('pvPhone').textContent = data.profile.phone || 'Not saved yet';
+    document.getElementById('pfName').value = data.profile.name || '';
+    document.getElementById('pfPhone').value = data.profile.phone || '';
+  } catch {
+    // Non-fatal -- the profile card just stays on its "not saved yet" defaults.
   }
 }
 
-function formatDate(iso) {
-  try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
-  catch { return iso; }
-}
-
-// Exact date + time (e.g. "16 Sept 2026, 6:42 pm") — used for the
-// delivered timestamp, where the precise moment matters.
-function formatDateTime(iso) {
-  try {
-    return new Date(iso).toLocaleString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
-    });
-  } catch { return iso; }
-}
-
-let currentOrderId = null;
-
-async function openOrder(orderId) {
-  currentOrderId = orderId;
-  document.getElementById('odOrderId').textContent = orderId;
-  document.getElementById('odDate').textContent = '';
-  document.getElementById('odStepper').innerHTML = '';
-  document.getElementById('odDelivered').textContent = '';
-  document.getElementById('odItems').innerHTML = 'Loading…';
-  document.getElementById('returnForm').style.display = 'none';
-  document.getElementById('returnSuccess').style.display = 'none';
-  document.getElementById('returnError').style.display = 'none';
-  document.getElementById('orderOverlay').classList.add('open');
-
-  try {
-    const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}`, { credentials: 'include' });
-    const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load this order.');
-    document.getElementById('odDate').textContent = formatDate(data.order.date);
-    document.getElementById('odStepper').innerHTML = data.stages.map(s => `
-      <div class="step ${s.done ? 'done' : ''}">
-        <div class="step-dot">${s.done ? '✓' : ''}</div>
-        <div class="step-label">${s.label}</div>
-      </div>`).join('');
-    document.getElementById('odDelivered').textContent = data.order.deliveredAt
-      ? `Delivered on ${formatDateTime(data.order.deliveredAt)}`
-      : '';
-    document.getElementById('odItems').innerHTML = `<div class="order-row"><span>${data.order.items}</span><span>₹${data.order.total}</span></div>`;
-  } catch (err) {
-    document.getElementById('odItems').innerHTML = `<p style="color:#842029">${err.message}</p>`;
-  }
-}
-
-function closeOrderModal() {
-  document.getElementById('orderOverlay').classList.remove('open');
-}
-
-function toggleReturnForm() {
-  const f = document.getElementById('returnForm');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-}
-
-async function submitReturn() {
-  const reason = document.getElementById('returnReason').value.trim();
-  const err = document.getElementById('returnError');
-  const ok = document.getElementById('returnSuccess');
+async function saveProfile() {
+  const name = document.getElementById('pfName').value.trim();
+  const phone = document.getElementById('pfPhone').value.trim();
+  const err = document.getElementById('profileError');
+  const ok = document.getElementById('profileSuccess');
   err.style.display = 'none';
   ok.style.display = 'none';
-  if (!reason) {
-    err.textContent = 'Please describe the issue.';
+  if (!name || !phone) {
+    err.textContent = 'Name and phone are both required.';
     err.style.display = 'block';
     return;
   }
   try {
-    const res = await fetch(`${API_BASE}/api/returns`, {
+    const res = await fetch(`${API_BASE}/api/profile`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: currentOrderId, reason }),
+      body: JSON.stringify({ name, phone }),
     });
     const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not submit your return request.');
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save your profile.');
     ok.style.display = 'block';
-    document.getElementById('returnReason').value = '';
+    await loadProfile();
+    toggleProfileForm();
   } catch (e) {
     err.textContent = e.message;
     err.style.display = 'block';
   }
 }
 
-document.getElementById('orderOverlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeOrderModal();
-});
+/* ── SAVED ADDRESSES (an account can have several -- Home, Office, a
+   gift recipient's place -- each with its own recipient name/phone,
+   since who receives an order can differ from who placed it). All
+   four fields are required when adding one. ── */
+function renderAddressList(addresses) {
+  const el = document.getElementById('addressList');
+  if (!addresses.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:14px">Your address book is empty. Add one so checkout can remember it next time.</p>';
+    return;
+  }
+  el.innerHTML = addresses.map(a => `
+    <div class="address-item">
+      <div>
+        <div class="address-label">${a.label}</div>
+        <div class="address-meta">${a.recipientName} · ${a.phone}</div>
+        <div class="address-text">${[a.address, a.city, a.state, a.pincode].filter(Boolean).join(', ')}</div>
+      </div>
+      <button class="cart-action-link" onclick="deleteAddress('${a.id}')">Remove</button>
+    </div>`).join('');
+}
+
+async function loadAddresses() {
+  try {
+    const res = await fetch(`${API_BASE}/api/addresses`, { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error();
+    renderAddressList(data.addresses);
+  } catch {
+    document.getElementById('addressList').innerHTML = '<p style="color:#842029;font-size:14px">Could not load your address book.</p>';
+  }
+}
+
+function toggleAddressForm() {
+  const f = document.getElementById('addressForm');
+  const showing = f.style.display !== 'none';
+  f.style.display = showing ? 'none' : 'block';
+  document.getElementById('addressToggleBtn').textContent = showing ? '+ Add Address' : 'Cancel';
+  if (!showing) {
+    ['afRecipient', 'afPhone', 'afAddress', 'afPincode', 'afLabelOther'].forEach(id => document.getElementById(id).value = '');
+    resetAddressLabelPicker();
+    resetAddressLocationPickers();
+    document.getElementById('addressError').style.display = 'none';
+    document.getElementById('addressSuccess').style.display = 'none';
+  }
+}
+
+function capAddressWords(el) {
+  const words = el.value.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 25) el.value = words.slice(0, 25).join(' ');
+}
+
+let selectedAddressLabel = '';
+function selectAddressLabel(label) {
+  selectedAddressLabel = label;
+  document.querySelectorAll('#afLabelGroup .label-choice').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.label === label);
+  });
+  document.getElementById('afLabelOther').style.display = label === 'Other' ? 'block' : 'none';
+}
+function resetAddressLabelPicker() {
+  selectedAddressLabel = '';
+  document.querySelectorAll('#afLabelGroup .label-choice').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('afLabelOther').style.display = 'none';
+}
+
+/* ── STATE / CITY (cascading -- pick a state, then its cities load).
+   INDIA_LOCATIONS (js/india-locations.js) is a curated list, not an
+   exhaustive one, so City always ends with an "Other" option that
+   reveals a plain text box for anywhere not listed. ── */
+function populateStateDropdown() {
+  const sel = document.getElementById('afState');
+  if (typeof INDIA_LOCATIONS === 'undefined' || sel.options.length > 1) return;
+  Object.keys(INDIA_LOCATIONS).sort().forEach(state => {
+    const opt = document.createElement('option');
+    opt.value = state;
+    opt.textContent = state;
+    sel.appendChild(opt);
+  });
+}
+populateStateDropdown();
+
+function onAddressStateChange() {
+  const state = document.getElementById('afState').value;
+  const citySel = document.getElementById('afCity');
+  document.getElementById('afCityOther').style.display = 'none';
+  document.getElementById('afCityOther').value = '';
+  if (!state || typeof INDIA_LOCATIONS === 'undefined') {
+    citySel.disabled = true;
+    citySel.innerHTML = '<option value="">Select state first</option>';
+    return;
+  }
+  citySel.disabled = false;
+  const cities = (INDIA_LOCATIONS[state] || []).slice().sort();
+  citySel.innerHTML = '<option value="">Select City</option>'
+    + cities.map(c => `<option value="${c}">${c}</option>`).join('')
+    + '<option value="__other__">Other (type manually)</option>';
+}
+
+function onAddressCityChange() {
+  const isOther = document.getElementById('afCity').value === '__other__';
+  document.getElementById('afCityOther').style.display = isOther ? 'block' : 'none';
+}
+
+function resetAddressLocationPickers() {
+  document.getElementById('afState').value = '';
+  const citySel = document.getElementById('afCity');
+  citySel.disabled = true;
+  citySel.innerHTML = '<option value="">Select state first</option>';
+  document.getElementById('afCityOther').style.display = 'none';
+  document.getElementById('afCityOther').value = '';
+}
+
+async function saveAddress() {
+  const label = selectedAddressLabel === 'Other'
+    ? document.getElementById('afLabelOther').value.trim()
+    : selectedAddressLabel;
+  const recipientName = document.getElementById('afRecipient').value.trim();
+  const phone = document.getElementById('afPhone').value.trim();
+  const address = document.getElementById('afAddress').value.trim();
+  const state = document.getElementById('afState').value.trim();
+  const citySelectVal = document.getElementById('afCity').value.trim();
+  const city = citySelectVal === '__other__'
+    ? document.getElementById('afCityOther').value.trim()
+    : citySelectVal;
+  const pincode = document.getElementById('afPincode').value.trim();
+  const err = document.getElementById('addressError');
+  const ok = document.getElementById('addressSuccess');
+  err.style.display = 'none';
+  ok.style.display = 'none';
+  if (!label) {
+    err.textContent = selectedAddressLabel === 'Other'
+      ? 'Please name this address.'
+      : 'Please choose Home, Work, or Other.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!recipientName || !phone || !address || !city || !state || !pincode) {
+    err.textContent = 'Please fill in every field.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!/^[1-9][0-9]{5}$/.test(pincode)) {
+    err.textContent = 'Enter a valid 6-digit PIN code.';
+    err.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/addresses`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, recipientName, phone, address, city, state, pincode }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save that address.');
+    ok.style.display = 'block';
+    await loadAddresses();
+    toggleAddressForm();
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+}
+
+async function deleteAddress(id) {
+  if (!confirm('Remove this saved address?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/addresses/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not remove that address.');
+    await loadAddresses();
+  } catch (e) {
+    alert(e.message);
+  }
+}
 
 document.addEventListener('auth:changed', (e) => {
   if (e.detail.user) {
-    loadOrders();
+    document.getElementById('accountSignedOut').style.display = 'none';
+    document.getElementById('accountSignedIn').style.display = 'block';
+    loadProfile();
+    loadAddresses();
   } else {
     document.getElementById('accountSignedIn').style.display = 'none';
     document.getElementById('accountSignedOut').style.display = 'block';

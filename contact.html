@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact — Brine & Shell</title>
-  <meta name="description" content="Questions, bulk orders, or partnerships? Reach Brine & Shell by email or phone, or send a message — we respond within 24 hours on business days." />
+  <title>Contact | Brine & Shell</title>
+  <meta name="description" content="Questions, bulk orders, or partnerships? Reach Brine & Shell by email or phone, or send a message. We respond within 24 hours on business days." />
   <link rel="canonical" href="https://www.brineandshell.com/contact.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Contact — Brine & Shell" />
+  <meta property="og:title" content="Contact | Brine & Shell" />
   <meta property="og:description" content="Get in touch with Brine & Shell for orders, bulk pricing, partnerships, or support." />
   <meta property="og:image" content="https://www.brineandshell.com/images/brineandshell.png" />
   <meta property="og:url" content="https://www.brineandshell.com/contact.html" />
@@ -28,7 +28,7 @@
 <div class="page-hero">
   <p class="eyebrow">Get in Touch</p>
   <h1>We'd love to hear from you</h1>
-  <p>Questions, bulk orders, partnerships, or just want to say hi — we're here.</p>
+  <p>Questions, bulk orders, partnerships, or just want to say hi? We're here.</p>
 </div>
 
 <div style="background:var(--cream);padding:72px 5%">
@@ -38,10 +38,10 @@
       <p class="eyebrow">Contact Info</p>
       <h2>Let's talk peanut butter</h2>
       <p>Our team responds within 24 hours on business days. For urgent orders, call us directly.</p>
-      <div class="c-detail"><span class="c-icon">📧</span><div><strong>Email</strong><span>support@brineandshell.com</span></div></div>
-      <div class="c-detail"><span class="c-icon">📞</span><div><strong>Phone</strong><span>+91 12345 67890</span><span style="display:block;font-size:12px;color:#999">Mon–Sat, 10am–6pm IST</span></div></div>
-      <div class="c-detail"><span class="c-icon">📍</span><div><strong>Address</strong><span>Mumbai, Maharashtra, India</span></div></div>
-      <div class="c-detail"><span class="c-icon">🚚</span><div><strong>Delivery</strong><span>Pan-India. Free above <span data-fd-amount>₹499</span>.</span></div></div>
+      <div class="c-detail"><span class="c-icon">01</span><div><strong>Email</strong><span>support@brineandshell.com</span></div></div>
+      <div class="c-detail"><span class="c-icon">02</span><div><strong>Phone</strong><span>+91 12345 67890</span><span style="display:block;font-size:12px;color:#999">Mon–Sat, 10am–6pm IST</span></div></div>
+      <div class="c-detail"><span class="c-icon">03</span><div><strong>Address</strong><span>Mumbai, Maharashtra, India</span></div></div>
+      <div class="c-detail"><span class="c-icon">04</span><div><strong>Delivery</strong><span>Pan-India. Free above <span data-fd-amount>₹499</span>.</span></div></div>
 
       <div class="faq-box">
         <h4>Quick Answers</h4>
@@ -80,7 +80,7 @@
         <!-- Honeypot: hidden from real visitors, bots tend to fill every field in. -->
         <input type="text" name="company" id="company" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;width:1px;height:1px;" aria-hidden="true" />
         <button type="submit" class="form-submit" id="contactSubmitBtn">Send Message</button>
-        <div class="form-success" id="formSuccess">✅ Message sent! We'll get back to you within 24 hours.</div>
+        <div class="form-success" id="formSuccess">Message sent. We'll get back to you within 24 hours.</div>
         <div class="form-error" id="formError"></div>
       </form>
     </div>
@@ -124,7 +124,7 @@ async function submitForm(e) {
     form.reset();
     setTimeout(() => s.style.display = 'none', 6000);
   } catch (e2) {
-    err.textContent = '⚠️ ' + (e2.message || 'Could not send your message. Please try again or email us directly.');
+    err.textContent = e2.message || 'Could not send your message. Please try again or email us directly.';
     err.style.display = 'block';
   } finally {
     btn.disabled = false;

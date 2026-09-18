@@ -33,14 +33,17 @@ directly. Change a price in exactly one place.
 
 ### Google Sheet (stores orders, contact messages, newsletter emails)
 
-1. Create a new Google Sheet. Add four tabs named exactly `Orders`,
-   `Contact`, `Newsletter`, `Returns` (case-sensitive). Give each this
-   exact header row (order matters — the backend writes/reads by
-   column position, not by header name):
-   - `Orders`: `Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At`
+1. Create a new Google Sheet. Add seven tabs named exactly `Orders`,
+   `Contact`, `Newsletter`, `Returns`, `Profiles`, `Addresses`, `Reviews`
+   (case-sensitive). Give each this exact header row (order matters —
+   the backend writes/reads by column position, not by header name):
+   - `Orders`: `Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs`
    - `Contact`: `Submitted At | First Name | Last Name | Email | Phone | Subject | Message`
    - `Newsletter`: `Signed Up At | Email`
-   - `Returns`: `Requested At | Order ID | Customer Email | Items | Reason | Status`
+   - `Returns`: `Requested At | Order ID | Customer Email | Items | Reason | Status | Image URL | Return ID | Video URL | Verification Phrase`
+   - `Profiles`: `Account Email | Name | Phone | Updated At`
+   - `Addresses`: `Address ID | Account Email | Label | Recipient Name | Phone | Address | Status | Created At | Pincode | City | State`
+   - `Reviews`: `Timestamp | Order ID | Product ID | Customer Email | Customer Name | Product Rating | Delivery Speed | Review Text | Status | Review ID`
 2. Go to [console.cloud.google.com](https://console.cloud.google.com),
    create a project, enable the **Google Sheets API**.
 3. Create a **Service Account** (IAM & Admin → Service Accounts →
@@ -117,18 +120,122 @@ account for Sheets access; this one lets real customers sign in.
 
 ### Update the Orders sheet's header row
 
-Pass 2 added a **Fulfillment Status** column. Your `Orders` tab's
-header row (row 1) should read left to right:
+Your `Orders` tab's header row (row 1) should read left to right:
 
 ```
-Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At
+Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs
 ```
 
-Also add a new tab named **Returns** with header row:
+`Account Email` and `Address` are the two newest columns — `Account Email`
+is only ever the signed-in account's own email (used to match "My
+Orders"); `Address` is the delivery address typed at checkout, shown
+to you in `/admin.html` so you know where to ship each order. `Item IDs`
+is the newest column -- a compact `cubes:2;dual:1` record of exactly
+which product ids (and quantities) were in the order, written once at
+checkout. `Items` (the older column) is a human-readable string built
+from product NAMES, which is fine to look at but can't be reliably
+matched back to a real product id -- `Item IDs` is what lets a
+customer "review this product" on `/orders.html` (see Reviews below)
+without guessing from that display text. Orders placed before this
+column existed simply won't offer a review button -- same as they
+already can't offer a return, for the same "nothing to check it
+against" reason.
+
+**Checkout requires sign-in.** `POST /api/checkout/create-order` is
+guarded by the same `requireAuth` middleware as `/api/orders/mine`,
+`/api/addresses`, etc. — a request with no valid session cookie is
+rejected with 401 before an order is ever created, so `Account Email`
+can no longer be blank for a new order. (`shop.html` also hides the
+checkout modal from signed-out visitors and shows a "Sign in to check
+out" prompt instead, but that's just UX — the 401 on the server is the
+actual boundary.) Any older rows with a blank `Account Email` are from
+before this was enforced and are safe to ignore or clean up.
+
+Also add a tab named **Returns** with header row:
 
 ```
-Timestamp | Order ID | Customer Email | Items | Reason | Status
+Timestamp | Order ID | Customer Email | Items | Reason | Status | Image URL | Return ID | Video URL | Verification Phrase
 ```
+
+`Image URL` and `Video URL` are paths like `/uploads/returns/172...-a1b2c3.jpg` -- append
+them to your site's domain to view the photo/video the customer attached
+(e.g. `https://brineandshell.com/uploads/returns/172...-a1b2c3.jpg`).
+Uploaded files are saved to an `uploads/` folder next to the site's
+HTML files, so make sure that folder persists across deploys (it's in
+`.gitignore`, since it's user-uploaded content, not code). `Return ID`
+is used by the admin approve/cancel flow. `Verification Phrase` is the
+order id + date phrase the customer was shown on screen and asked to
+say out loud while recording (see below) -- it's not checked
+automatically, it's there so you have the exact expected phrase on
+hand when reviewing the video yourself.
+
+**Why the video is recorded live, not uploaded:** there's no reliable
+way to prove a video file wasn't cut/edited, reused from an old order,
+or generated by AI -- that's a real, unsolved problem (video tamper
+detection), not something a small self-hosted store can bolt on. So
+`orders.html` doesn't offer a file picker for the unboxing video at
+all -- it opens the customer's camera and records right there in the
+browser, and shows them a phrase (their order id + today's date) to
+say out loud during the clip. None of this proves anything
+automatically; it just raises the effort needed to fake a return far
+enough that it's not worth it, and gives you (the human reviewing the
+`Return Requests` table in `/admin.html`) something concrete to check
+the footage against.
+
+Add a tab named **Profiles** with header row:
+
+```
+Account Email | Name | Phone | Updated At
+```
+
+This is the account holder's own name/phone — who placed the order and
+gets the confirmation email — written when they save the "Profile"
+section on `/account.html`. One row per account, overwritten in place
+each time they save (not appended).
+
+Finally, add a tab named **Addresses** with header row:
+
+```
+Address ID | Account Email | Label | Recipient Name | Phone | Address | Status | Created At | Pincode | City | State
+```
+
+(If you already created this tab before, just add **City** as column J and
+**State** as column K -- new columns at the end, nothing else moves. Note
+"Address" itself is now just the short street line; City/State/Pincode are
+their own columns.)
+
+This is the account's saved address book — a customer can save
+several (Home, Office, a gift recipient's place), each with its own
+recipient name/phone since who *receives* an order can differ from
+who placed it. Managed from the "Saved Addresses" section of
+`/account.html`; the checkout page's "Deliver To" picker reads from
+here too. `Status` is `Active` or `Deleted` — removing an address just
+flips this rather than deleting the row.
+
+Finally, add a tab named **Reviews** with header row:
+
+```
+Timestamp | Order ID | Product ID | Customer Email | Customer Name | Product Rating | Delivery Speed | Review Text | Status | Review ID
+```
+
+A signed-in customer can review a product from `/orders.html` once
+their order for it shows **Delivered** -- rating the product itself
+(1-5 stars) AND separately how the delivery went (**Fast** / **On
+Time** / **Late**), plus an optional written review capped at 100
+words. It's one review per order+product (checked server-side, same
+as the one-return-per-order rule), and the product has to have
+actually been in that order (checked against `Item IDs` on the
+`Orders` tab above).
+
+New reviews save with `Status` = `Pending` and email you at
+`CONTACT_TO_EMAIL` -- **nothing shows up on the shop page until you
+approve it** in the "Product Reviews" table on `/admin.html`, the same
+moderation pattern as return requests. Approving or rejecting emails
+the customer either way. Approved reviews power the star rating and
+"Read Reviews" list under each product card on `/shop.html`, including
+a delivery-speed breakdown (e.g. "80% said delivery was fast") pulled
+from every approved review for that product, not just the ones with
+written text.
 
 ### Admin password
 
@@ -217,11 +324,45 @@ should return a real Razorpay `orderId` once test keys are in `.env`.
   `js/config.js`, the nav shows a real "Sign in with Google" button.
   After signing in, it shows the customer's name/email instead, with
   a dropdown for **My Orders** and **Sign Out**.
-- `/account.html` lists the signed-in customer's paid orders (matched
-  by the email they used at checkout — no separate signup needed).
-  Clicking one shows the Order Placed → Dispatched → Shipped →
-  Delivered stepper and a **Request a Return** button, which logs to
-  the `Returns` tab and emails you.
+- The header menu's signed-in dropdown has two separate links:
+  **My Profile** (`/account.html`) and **My Orders** (`/orders.html`).
+  `/account.html` holds **Profile** (name + phone, saved against
+  whichever Google account is signed in) and **Saved Addresses** (an
+  address book — multiple named addresses, each with its own recipient
+  name/phone, so a customer can ship to somewhere other than their own
+  address, e.g. a gift). `/orders.html` lists the signed-in customer's
+  paid orders (matched by their signed-in account email, kept in the
+  separate Account Email column so it survives the contact email being
+  edited). Clicking an order shows the exact phone/address that were
+  typed at checkout for that order (so the customer can double-check
+  where it's headed), the Order Placed → Shipped → Out for Delivery →
+  Delivered stepper, and a **Request a Return** button. A return
+  requires both a written reason and a photo of the issue, and logs to
+  the `Returns` tab (with a link to the photo) and emails you.
+- **Cancelling an order**: the admin dashboard's status dropdown also
+  offers **Cancelled** — for when an order genuinely can't be
+  fulfilled (delivery location too far out of range, etc), not just
+  another step toward delivery. Picking it asks for confirmation (and
+  an optional reason, included in the customer's email) before saving.
+  A cancelled order shows a clear "This order was cancelled" notice on
+  the customer's order detail page in place of the stepper, and the
+  **Request a Return** button is hidden there since there's nothing
+  left to return.
+- **Return requests**: the admin dashboard has a second table listing
+  every return request (reason, photo link, which order/customer) with
+  a status dropdown of its own — **Requested** (the default),
+  **Approved**, or **Cancelled** (for a request with bad or
+  insufficient info, e.g. the wrong order or an unusable photo). The
+  customer gets an email either way.
+- **Product reviews**: once an order shows Delivered, `/orders.html`
+  lets the customer rate each product in it separately -- a 1-5 star
+  product rating plus a Fast/On Time/Late delivery rating, and an
+  optional 100-word written review -- one per order+product. New
+  reviews land as **Pending** and email you; approve or reject them
+  from the "Product Reviews" table on `/admin.html`. Only **Approved**
+  reviews are public, showing as a star rating + "Read Reviews" list
+  under each product on `/shop.html`, including a delivery-speed
+  breakdown across everyone who's reviewed that product.
 
 ## 6. Local development (optional)
 

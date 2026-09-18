@@ -17,6 +17,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+html, body { max-width: 100%; overflow-x: hidden; }
 body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.65; }
 h1,h2,h3,h4 { font-family: 'Playfair Display', serif; line-height: 1.2; }
 a { text-decoration: none; color: inherit; }
@@ -103,12 +104,12 @@ img { max-width: 100%; display: block; }
 /* ============ FEATURES STRIP ============ */
 .features-strip { background: var(--navy); display: grid; grid-template-columns: repeat(4,1fr); padding: 44px 5%; gap: 24px; }
 .fi { display: flex; align-items: center; gap: 14px; }
-.fi-icon { font-size: 30px; flex-shrink: 0; }
+.fi-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(201,164,90,.45); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; letter-spacing: .5px; color: var(--gold); }
 .fi strong { display: block; color: var(--white); font-size: 15px; font-weight: 600; }
 .fi p { color: rgba(255,255,255,.6); font-size: 13px; margin: 0; }
 
 /* ============ PRODUCT CARDS ============ */
-.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px,1fr)); gap: 28px; max-width: 1200px; margin: 0 auto; }
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(270px,100%),1fr)); gap: 28px; max-width: 1200px; margin: 0 auto; }
 
 .product-card { background: var(--white); border-radius: var(--radius); overflow: hidden; transition: transform .25s, box-shadow .25s; box-shadow: 0 2px 14px rgba(28,27,58,.07); }
 .product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
@@ -149,7 +150,7 @@ img { max-width: 100%; display: block; }
 .bs-ph img { width: 120px; height: 120px; border-radius: 50%; opacity: .9; }
 
 /* ============ TESTIMONIALS ============ */
-.testi-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.testi-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(280px,100%),1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .testi-card { background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); }
 .stars { color: var(--gold); font-size: 18px; margin-bottom: 12px; letter-spacing: 2px; }
 .testi-card p { font-size: 15px; color: var(--text); margin-bottom: 16px; font-style: italic; line-height: 1.7; }
@@ -233,6 +234,47 @@ img { max-width: 100%; display: block; }
 .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 16px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 15px; font-family: 'Inter', sans-serif; background: var(--cream); outline: none; transition: border-color .2s; }
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--gold); }
 .form-group textarea { resize: vertical; min-height: 120px; }
+.form-group textarea.address-textarea { min-height: 48px; }
+
+/* Live in-browser unboxing-video recorder (orders.html) -- same box
+   look as a regular form field so it doesn't feel like a bolted-on
+   widget. */
+.video-recorder-box { border: 1.5px solid #ddd; border-radius: 8px; background: var(--cream); padding: 12px; }
+.video-recorder-box video { width: 100%; max-height: 260px; background: #000; border-radius: 6px; display: none; }
+.video-recorder-box video.has-content { display: block; margin-bottom: 10px; }
+#recorderControls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#recorderControls .btn-sm[disabled] { opacity: .5; cursor: not-allowed; }
+#recordTimer { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+/* Star rating picker (orders.html review form) and read-only star
+   display (shop.html product cards + review list). */
+.star-picker { display: flex; gap: 6px; font-size: 30px; line-height: 1; cursor: pointer; user-select: none; }
+.star-picker span { color: #ddd; transition: color .12s; }
+.star-picker span.filled { color: var(--gold); }
+.star-display { color: var(--gold); font-size: 15px; letter-spacing: 1px; }
+.star-display .star-empty { color: #ddd; }
+
+/* One row per product in the order-detail "Rate Your Products"
+   section -- name on the left, action/status on the right. */
+.review-item-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cream-dk); font-size: 14px; }
+.review-item-row:last-child { border-bottom: none; }
+.review-status-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 50px; }
+.review-status-pill.pending { background: #fdecd2; color: #b35c00; }
+.review-status-pill.approved { background: #e6f4ea; color: #1e7e34; }
+.review-status-pill.rejected { background: #fdecea; color: #b3261e; }
+
+/* Product-card rating summary + "Read Reviews" trigger on shop.html. */
+.pc-rating { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+.pc-rating button { background: none; border: none; padding: 0; color: var(--navy); text-decoration: underline; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+/* Individual reviews inside the "Read Reviews" modal. */
+.review-card { padding: 14px 0; border-bottom: 1px solid var(--cream-dk); }
+.review-card:last-child { border-bottom: none; }
+.review-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.review-delivery-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 50px; white-space: nowrap; }
+.review-delivery-badge.fast { background: #e6f4ea; color: #1e7e34; }
+.review-delivery-badge.ontime { background: #eef1fb; color: #2e2d54; }
+.review-delivery-badge.late { background: #fdecea; color: #b3261e; }
 .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .form-submit { width: 100%; padding: 14px; font-size: 16px; font-weight: 700; background: var(--navy); color: var(--white); border: none; border-radius: 50px; cursor: pointer; font-family: 'Inter', sans-serif; transition: background .2s; }
 .form-submit:hover { background: var(--gold); color: var(--navy); }
@@ -246,13 +288,13 @@ img { max-width: 100%; display: block; }
 .about-story { display: flex; align-items: center; gap: 72px; padding: 80px 5%; background: var(--cream-dk); }
 .about-story-img { flex: 1; max-width: 440px; border-radius: 20px; overflow: hidden; }
 .about-story-img img { width: 100%; height: 380px; object-fit: cover; }
-.values-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.values-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(220px,100%),1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .value-card { background: var(--white); border-radius: var(--radius); padding: 32px 24px; text-align: center; box-shadow: var(--shadow); }
-.value-icon { font-size: 38px; margin-bottom: 14px; }
+.value-icon { width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%; border: 1px solid rgba(201,164,90,.45); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; letter-spacing: .5px; color: var(--gold); }
 .value-card h3 { color: var(--navy); font-size: 18px; margin-bottom: 8px; }
 .value-card p { color: var(--muted); font-size: 14px; }
 .stats-strip { background: var(--gold); padding: 64px 5%; }
-.stats-inner { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 24px; max-width: 900px; margin: 0 auto; text-align: center; }
+.stats-inner { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(160px,100%),1fr)); gap: 24px; max-width: 900px; margin: 0 auto; text-align: center; }
 .stat-num { font-family: 'Playfair Display', serif; font-size: 52px; font-weight: 700; color: var(--navy); }
 .stat-label { color: var(--navy); font-weight: 600; margin-top: 4px; }
 
@@ -261,7 +303,7 @@ img { max-width: 100%; display: block; }
 .contact-info h2 { font-size: 32px; color: var(--navy); margin-bottom: 14px; }
 .contact-info > p { color: var(--muted); margin-bottom: 32px; }
 .c-detail { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 22px; }
-.c-icon { font-size: 22px; }
+.c-icon { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(201,164,90,.45); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 600; letter-spacing: .3px; color: var(--gold); }
 .c-detail strong { display: block; color: var(--navy); font-size: 15px; font-weight: 600; }
 .c-detail span { font-size: 14px; color: var(--muted); }
 .contact-form { background: var(--white); border-radius: var(--radius); padding: 40px; box-shadow: var(--shadow); }
@@ -304,13 +346,48 @@ img { max-width: 100%; display: block; }
 .auth-menu a:hover, .auth-menu button:hover { background: var(--cream); }
 
 .mobile-auth { padding: 16px 0 4px; border-top: 1px solid var(--cream-dk); margin-top: 8px; }
-.mobile-auth .auth-chip { padding: 8px 0; }
-.mobile-auth .auth-menu { position: static; display: block; box-shadow: none; padding: 8px 0 0; margin-top: 8px; background: none; }
+/* Signed-in mobile panel: a real card, not the desktop pill-chip stretched
+   tall. The desktop .auth-chip is a compact 50px-radius pill sized for a
+   single avatar+name row; on mobile the menu (email/My Orders/Sign Out)
+   renders inline below it, so that same pill radius on a much taller box
+   produced an oversized, oddly-rounded shape with empty space beside the
+   avatar. Overriding shape/background here (not touching .auth-chip itself,
+   which desktop still uses) fixes that without affecting desktop at all. */
+.mobile-auth .auth-chip {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--cream);
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: default;
+}
+.mobile-auth .auth-chip:hover, .mobile-auth .auth-chip:focus-within { background: var(--cream); }
+.mobile-auth .auth-name { max-width: none; flex: 1; white-space: normal; }
+.mobile-auth .auth-menu { flex-basis: 100%; width: 100%; position: static; display: block; box-shadow: none; padding: 8px 0 0; margin-top: 8px; background: none; }
 .mobile-auth .auth-menu-email { padding-left: 0; }
 .mobile-auth .auth-menu a, .mobile-auth .auth-menu button { padding-left: 0; }
 
 /* ============ ACCOUNT / ORDERS ============ */
 .account-layout { max-width: 800px; margin: 0 auto; padding: 60px 5% 100px; }
+.profile-card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.profile-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
+.profile-card-head h3 { font-size: 17px; color: var(--navy); }
+.profile-view p { font-size: 14px; color: var(--text); margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-view p:last-child { margin-bottom: 0; }
+.profile-view strong { color: var(--navy); min-width: 130px; }
+.account-section-title { font-size: 18px; color: var(--navy); margin: 32px 0 16px; }
+.label-choice-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.label-choice { padding: 9px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1.5px solid #ddd; background: var(--cream); color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color .2s, color .2s, background .2s; }
+.label-choice:hover { border-color: var(--gold); }
+.label-choice.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+.label-choice-add { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1.5px dashed #ccc; background: var(--cream); color: var(--navy); font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .2s, background .2s; }
+.label-choice-add:hover { border-color: var(--gold); border-style: solid; background: var(--white); }
+.address-item { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--cream-dk); }
+.address-item:last-child { border-bottom: none; }
+.address-label { font-weight: 700; color: var(--navy); font-size: 14px; }
+.address-meta { font-size: 12px; color: var(--muted); margin: 2px 0 6px; }
+.address-text { font-size: 14px; color: var(--text); white-space: pre-wrap; }
 .order-card { background: var(--white); border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; transition: box-shadow .2s, transform .2s; }
 .order-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 .order-card .oc-id { font-weight: 700; color: var(--navy); font-size: 15px; }
@@ -325,7 +402,31 @@ img { max-width: 100%; display: block; }
 .step-label { font-size: 11px; color: var(--muted); text-align: center; }
 .step.done .step-label { color: var(--navy); font-weight: 600; }
 
-/* ============ RESPONSIVE ============ */
+/* ============ RESPONSIVE ============
+   Mobile-first breakpoint set, applied consistently across every
+   page and component that shares style.css (admin.html is a
+   self-contained page and keeps its own copy of this pattern).
+   Breakpoints, widest to narrowest:
+     920px — navbar switches to the hamburger menu. This is NOT tied
+             to the 1024/768 breakpoints below: logo + 4 nav links +
+             cart + sign-in chip need ~770px of clear space, so on a
+             768px cutoff the row would already be overflowing for
+             roughly 150px of tablet widths. 920px gives it room.
+     1024px — tablet: stack two-up layouts into one column.
+     768px  — large phone / small tablet: collapse remaining grids,
+              forms go single-column.
+     600px  — phone: components that are fine as a horizontal row on
+              a tablet start cramping (order cards, stepper).
+     480px  — small phone: tighten padding, go full single-column
+              everywhere, enlarge touch targets on dense controls.
+   ============================================ */
+
+/* Navbar: collapse before the tablet squeeze zone, not at 768px. */
+@media (max-width: 920px) {
+  .nav-links, .nav-cta, .nav-auth { display: none; }
+  .nav-toggle { display: block; }
+}
+
 @media (max-width: 1024px) {
   .footer-top { grid-template-columns: 1fr 1fr; }
   .hero { flex-direction: column; text-align: center; padding-top: 100px; }
@@ -338,17 +439,55 @@ img { max-width: 100%; display: block; }
   .shop-layout { flex-direction: column; }
   .cart-sidebar { width: 100%; position: static; }
 }
+
 @media (max-width: 768px) {
-  .nav-links, .nav-cta, .nav-auth { display: none; }
-  .nav-toggle { display: block; }
   .features-strip { grid-template-columns: 1fr 1fr; }
   .footer-top { grid-template-columns: 1fr; gap: 28px; }
   .footer-bottom { flex-direction: column; text-align: center; }
   .form-row-2 { grid-template-columns: 1fr; }
+  .contact-form { padding: 28px 22px; }
+  .modal { padding: 30px 22px; }
+  .about-story-img img, .bs-img img, .bs-ph { height: 280px; }
 }
+
+@media (max-width: 600px) {
+  /* Order card: the horizontal id/meta + status-pill row doesn't
+     have room to stay on one line once the pill's label gets long
+     ("Dispatched", "Delivered"), so stack it instead of letting it
+     squeeze or wrap mid-word. */
+  .order-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .order-card .oc-status { align-self: flex-start; }
+
+  .order-stepper { margin: 22px 0 16px; }
+  .order-stepper::before { left: 8%; right: 8%; }
+  .step-label { font-size: 10px; }
+  .step-dot { width: 24px; height: 24px; font-size: 12px; }
+
+  /* Cart row controls are the most-tapped element on the whole
+     site on mobile (adjusting quantity) -- 24px is below the ~44px
+     comfortable tap-target minimum, so size it up specifically for
+     touch widths rather than shrinking it everywhere. */
+  .cart-item-actions .qty-btn { width: 32px; height: 32px; font-size: 15px; }
+  .cart-item-actions { gap: 20px; }
+  .cart-action-link { padding: 6px 0; }
+  .cart-remove { padding: 6px; }
+}
+
 @media (max-width: 480px) {
   .features-strip { grid-template-columns: 1fr; }
   .section { padding: 60px 5%; }
+  .modal { padding: 24px 16px; border-radius: 16px; }
+  .modal h2 { font-size: 22px; }
+  .cart-sidebar { padding: 20px; }
+  .pc-body { padding: 18px; }
+  .contact-form { padding: 22px 16px; }
+  .faq-box { padding: 18px; }
+  .value-card { padding: 24px 18px; }
+  /* Full-width primary actions read as one clear next step on a
+     screen too narrow for a button to feel like a discrete tap
+     target next to other content. */
+  .hero-btns .btn { flex: 1 1 100%; text-align: center; }
+  .cart-item-name { max-width: 120px; }
 }
 
 

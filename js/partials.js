@@ -26,7 +26,7 @@ function buildHeader(page) {
   const mobileLinks = links.map(l => `<a href="${l.href}">${l.label}</a>`).join('');
 
   const cta = page.cartNav
-    ? `<a href="shop.html" class="nav-cta">🛒 Cart <span class="nav-cart-badge" id="cartBadge">0</span></a>`
+    ? `<a href="shop.html" class="nav-cta">Cart <span class="nav-cart-badge" id="cartBadge">0</span></a>`
     : `<a href="shop.html" class="nav-cta">Shop Now</a>`;
 
   return `

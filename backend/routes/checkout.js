@@ -4,7 +4,7 @@ const { priceCart } = require('../lib/catalog');
 const { createOrder, verifySignature, verifyWebhookSignature, getKeyId } = require('../lib/razorpay');
 const { appendRow, updateRowByKey, getRows } = require('../lib/sheets');
 const { sendEmail } = require('../lib/resend');
-const { COOKIE_NAME, verifySession } = require('../lib/auth');
+const { requireAuth } = require('../lib/auth');
 
 const router = express.Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,15 +50,24 @@ async function markOrderPaid(orderId, paymentId) {
 /* Step 1: browser sends { items: [{id, qty}], customer: {name, email, phone} }.
    We price the cart ourselves from data/products.json — the amount
    the browser thinks the total is never gets trusted — then ask
-   Razorpay to create an order for that (server-computed) amount. */
-router.post('/create-order', checkoutLimiter, async (req, res) => {
+   Razorpay to create an order for that (server-computed) amount.
+   requireAuth is the actual security boundary here: an order can no
+   longer be created by a guest at all, so accountEmail is always the
+   verified signed-in email, never blank. (The frontend also hides the
+   checkout flow from signed-out visitors -- see shop.html -- but that's
+   just UX; this middleware is what makes guest checkout impossible.) */
+router.post('/create-order', checkoutLimiter, requireAuth, async (req, res) => {
   const { items, customer } = req.body || {};
   const name = String(customer?.name || '').trim().slice(0, 120);
   const email = String(customer?.email || '').trim().slice(0, 200);
   const phone = String(customer?.phone || '').trim().slice(0, 20);
+  const address = String(customer?.address || '').trim().slice(0, 400);
 
-  if (!name || !email || !phone) {
-    return res.status(400).json({ ok: false, error: 'Please fill in your name, email and phone.' });
+  if (!name || !email || !phone || !address) {
+    return res.status(400).json({ ok: false, error: 'Please fill in your name, email, phone and delivery address.' });
+  }
+  if (address.length < 10) {
+    return res.status(400).json({ ok: false, error: 'Please enter a complete delivery address.' });
   }
   if (!EMAIL_RE.test(email)) {
     return res.status(400).json({ ok: false, error: 'That email address doesn\'t look right.' });
@@ -69,13 +78,12 @@ router.post('/create-order', checkoutLimiter, async (req, res) => {
 
   // "Email" (typed above) is contact info for THIS order and stays
   // whatever the customer enters -- it's fine for that to differ from
-  // their account. "Account Email" is separate: it's only ever the
-  // signed-in session's own email (blank for guest checkout), and it's
-  // the ONLY thing "My Orders" matches against, so editing the contact
-  // email can never make a real order invisible to its own account.
-  const sessionToken = req.cookies?.[COOKIE_NAME];
-  const sessionUser = sessionToken && verifySession(sessionToken);
-  const accountEmail = sessionUser ? sessionUser.email.toLowerCase() : '';
+  // their account. "Account Email" is separate: it's always the
+  // signed-in session's own email now that requireAuth guards this
+  // route (guest checkout is no longer possible), and it's the ONLY
+  // thing "My Orders" matches against, so editing the contact email
+  // can never make a real order invisible to its own account.
+  const accountEmail = req.user.email.toLowerCase();
 
   let priced;
   try {
@@ -99,8 +107,19 @@ router.post('/create-order', checkoutLimiter, async (req, res) => {
   }
 
   try {
+    // "cubes:2;dual:1" -- a compact, parseable record of exactly which
+    // product ids (and quantities) were in this order, appended as a
+    // new LAST column same as every other schema addition in this
+    // sheet. The existing "Items" column is a display string built
+    // from product NAMES ("Peanut Butter Cubes x2; ..."), which is
+    // fine for showing a human but useless for matching a review back
+    // to a real product id -- this is what lets "review this product"
+    // on orders.html know which products are actually reviewable for
+    // a given order, without guessing from display text.
+    const itemIds = priced.lineItems.map(i => `${i.id}:${i.qty}`).join(';');
+
     // Column order matches the Orders sheet header:
-    // Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email
+    // Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs
     await appendRow('Orders', [
       order.id,
       new Date().toISOString(),
@@ -113,6 +132,8 @@ router.post('/create-order', checkoutLimiter, async (req, res) => {
       '', // fulfillment status is set once payment is verified
       '', // delivered-at timestamp, filled in only once status reaches "Delivered"
       accountEmail, // signed-in account's email, if any -- used only to match "My Orders"
+      address, // delivery address typed at checkout -- shown to the admin for fulfillment
+      itemIds,
     ]);
   } catch (err) {
     console.error('Sheets append failed (order):', err.message);

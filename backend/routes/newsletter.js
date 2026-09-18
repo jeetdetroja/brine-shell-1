@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
   try {
     await sendEmail({
       to: email,
-      subject: 'Welcome to Brine & Shell — here\'s your 10% code',
+      subject: 'Welcome to Brine & Shell: here\'s your 10% code',
       html: `<p>Thanks for subscribing! Use code <strong>WELCOME10</strong> for 10% off your first order.</p>`,
     });
   } catch (err) {
