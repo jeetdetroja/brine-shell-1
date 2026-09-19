@@ -189,7 +189,7 @@ img { max-width: 100%; display: block; }
 
 /* ============ SHOP ============ */
 .shop-layout { display: flex; gap: 36px; padding: 60px 5%; align-items: flex-start; }
-.shop-products { flex: 1; }
+.shop-products { flex: 1; min-width: 0; }
 
 /* CART */
 .cart-sidebar { width: 340px; flex-shrink: 0; background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); position: sticky; top: 90px; }
@@ -438,6 +438,7 @@ img { max-width: 100%; display: block; }
   .about-story { flex-direction: column; }
   .contact-layout { grid-template-columns: 1fr; }
   .shop-layout { flex-direction: column; }
+  .shop-products { width: 100%; }
   .cart-sidebar { width: 100%; position: static; }
 }
 
@@ -449,9 +450,15 @@ img { max-width: 100%; display: block; }
   .contact-form { padding: 28px 22px; }
   .modal { padding: 30px 22px; }
   .about-story-img img, .bs-img img, .bs-ph { height: 280px; }
+  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
+  /* The shop must list every product vertically on phones. Explicit
+     columns prevent a minimum card width from pushing later products
+     outside the viewport. */
+  .products-grid { grid-template-columns: minmax(0, 1fr); }
+
   /* Order card: the horizontal id/meta + status-pill row doesn't
      have room to stay on one line once the pill's label gets long
      ("Dispatched", "Delivered"), so stack it instead of letting it
