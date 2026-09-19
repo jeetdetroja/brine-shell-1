@@ -4,6 +4,7 @@ const { requireAuth } = require('../lib/auth');
 const { sendEmail } = require('../lib/resend');
 const { getProduct } = require('../lib/catalog');
 const { REVIEWS_COL, REVIEW_STATUSES, DELIVERY_SPEEDS, REVIEW_TEXT_MAX_WORDS } = require('../lib/reviewsSchema');
+const { RETURNS_COL } = require('../lib/returnsSchema');
 
 const router = express.Router();
 
@@ -83,6 +84,21 @@ router.post('/', requireAuth, async (req, res) => {
   }
   if (!orderProductIds(order[OCOL.itemIds]).includes(productId)) {
     return res.status(400).json({ ok: false, error: "That product wasn't part of this order." });
+  }
+
+  // An approved return means the product went back -- there's nothing
+  // left to review. A merely-requested (still pending) return doesn't
+  // block this; only an approved one does.
+  try {
+    const returnRows = await getRows('Returns');
+    const approvedReturn = returnRows.slice(1)
+      .some(r => r[RETURNS_COL.orderId] === orderId && r[RETURNS_COL.status] === 'Approved');
+    if (approvedReturn) {
+      return res.status(400).json({ ok: false, error: 'This order was returned, so it can\'t be reviewed.' });
+    }
+  } catch (err) {
+    console.error('Sheets read failed (reviews, return check):', err.message);
+    return res.status(502).json({ ok: false, error: 'Could not check this order right now.' });
   }
 
   let reviewRows;

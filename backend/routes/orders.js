@@ -1,7 +1,8 @@
 const express = require('express');
-const { getRows } = require('../lib/sheets');
+const { getRows, updateRowByKey } = require('../lib/sheets');
 const { requireAuth } = require('../lib/auth');
-const { STAGES, stageIndex } = require('../lib/orderStatus');
+const { sendEmail } = require('../lib/resend');
+const { STAGES, CANCELLED, stageIndex } = require('../lib/orderStatus');
 const { RETURNS_COL } = require('../lib/returnsSchema');
 const { REVIEWS_COL } = require('../lib/reviewsSchema');
 
@@ -12,6 +13,11 @@ const router = express.Router();
 // Status, 9 Delivered At, 10 Account Email, 11 Address, 12 Item IDs.
 // See backend/README.md for the header row to use.
 const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8, deliveredAt: 9, accountEmail: 10, address: 11, itemIds: 12 };
+
+// A customer-typed cancellation reason is mandatory (see the /:orderId/cancel
+// route below) and capped the same way other free-text reason fields on
+// this site are (see backend/routes/returns.js).
+const CANCEL_REASON_MAX_WORDS = 100;
 
 // "cubes:2;dual:1" -> ['cubes', 'dual'] -- see backend/routes/reviews.js,
 // which is the other place this same parsing happens.
@@ -117,6 +123,80 @@ router.get('/:orderId', requireAuth, async (req, res) => {
     returnStatus,
     reviewStatuses,
   });
+});
+
+/* Customer-initiated cancellation -- only while the order hasn't
+   shipped yet. The client only shows this button pre-shipment, but
+   that copy of the status can be a few minutes stale (an admin could
+   have marked it Shipped in the meantime), so this re-reads the
+   current status from the sheet itself and is the real gate, not the
+   button's visibility. From "Shipped" onward this always refuses,
+   full stop -- a shipped order is handled through Request a Return
+   after it arrives instead. */
+router.post('/:orderId/cancel', requireAuth, async (req, res) => {
+  const reason = String(req.body?.reason || '').trim().slice(0, 1000);
+  if (!reason) {
+    return res.status(400).json({ ok: false, error: "Please tell us why you're cancelling." });
+  }
+  if (reason.split(/\s+/).filter(Boolean).length > CANCEL_REASON_MAX_WORDS) {
+    return res.status(400).json({ ok: false, error: `Keep the reason to ${CANCEL_REASON_MAX_WORDS} words or fewer.` });
+  }
+
+  let rows;
+  try {
+    rows = await getRows('Orders');
+  } catch (err) {
+    console.error('Sheets read failed (orders/cancel):', err.message);
+    return res.status(502).json({ ok: false, error: 'Could not process this right now.' });
+  }
+
+  const row = rows.slice(1).find(r => r[COL.id] === req.params.orderId);
+  if (!row || (row[COL.accountEmail] || '').toLowerCase() !== req.user.email.toLowerCase()) {
+    return res.status(404).json({ ok: false, error: 'Order not found.' });
+  }
+
+  const status = row[COL.status] || '';
+  if (status === CANCELLED) {
+    return res.status(409).json({ ok: false, error: 'This order is already cancelled.' });
+  }
+  if (status === 'Delivered') {
+    return res.status(409).json({ ok: false, error: "This order has already been delivered, so it can't be cancelled. You can request a return instead." });
+  }
+  // stageIndex('') is -1 ("Order Placed", nothing shipped yet); anything
+  // from "Shipped" (index 1) onward is too late.
+  if (stageIndex(status) >= 1) {
+    return res.status(409).json({ ok: false, error: 'This order has already shipped and can no longer be cancelled. You can request a return once it arrives instead.' });
+  }
+
+  let updated;
+  try {
+    // Column N = Cancellation Reason, appended at the end of the Orders
+    // sheet (see backend/README.md) -- new columns always go at the end
+    // here, never inserted earlier, so every existing row index stays
+    // valid.
+    updated = await updateRowByKey('Orders', req.params.orderId, { I: CANCELLED, N: reason });
+  } catch (err) {
+    console.error('Sheets update failed (orders/cancel):', err.message);
+    return res.status(502).json({ ok: false, error: 'Could not cancel this order right now.' });
+  }
+  if (!updated) {
+    return res.status(404).json({ ok: false, error: 'Order not found.' });
+  }
+
+  // Best-effort: confirm the cancellation by email.
+  try {
+    if (row[COL.email]) {
+      await sendEmail({
+        to: row[COL.email],
+        subject: 'Your Brine & Shell order was cancelled',
+        html: `<p>Order <strong>${req.params.orderId}</strong> has been cancelled at your request.</p><p>Reason given: ${reason}</p>`,
+      });
+    }
+  } catch (err) {
+    console.error('Email send failed (customer order cancel):', err.message);
+  }
+
+  res.json({ ok: true });
 });
 
 module.exports = router;

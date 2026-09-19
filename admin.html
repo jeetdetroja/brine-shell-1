@@ -263,6 +263,7 @@ async function loadOrders() {
         <select onchange="updateStatus('${o.orderId}', this)" data-prev="${o.status}" class="${o.status === 'Cancelled' ? 'status-cancelled' : ''}">
           ${ALL_STATUSES.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
+        ${o.status === 'Cancelled' ? `<p style="font-size:11px;color:var(--muted);margin-top:4px;max-width:180px;">${o.cancelReason ? `<strong>Cancelled by customer:</strong> ${o.cancelReason}` : '<strong>Cancelled by admin.</strong>'}</p>` : ''}
         <span class="status-saved" id="saved-${o.orderId}">✓ Saved</span>
       </td>
     </tr>`).join('');
@@ -445,6 +446,9 @@ async function loadReviews() {
         <select onchange="updateReviewStatus('${r.id}', this)" data-prev="${r.status}" class="${r.status === 'Rejected' ? 'status-cancelled' : ''}">
           ${REVIEW_STATUSES.map(s => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
+        <label style="display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px;white-space:nowrap;">
+          <input type="checkbox" id="revnotify-${r.id}" style="vertical-align:middle;margin-right:3px;">Notify customer
+        </label>
         <span class="status-saved" id="revsaved-${r.id}">✓ Saved</span>
       </td>
     </tr>`).join('');
@@ -453,17 +457,27 @@ async function loadReviews() {
 async function updateReviewStatus(reviewId, selectEl) {
   const status = selectEl.value;
   const prev = selectEl.dataset.prev;
+  // "Notify customer" is a per-row checkbox (defaults checked) so an admin
+  // can silently reject obvious spam/abuse without emailing whoever
+  // submitted it, while still emailing genuine customers by default --
+  // the approval gate is what keeps bad content off the site either way,
+  // this checkbox only controls whether the submitter hears back about it.
+  const notifyEl = document.getElementById(`revnotify-${reviewId}`);
+  const notify = notifyEl ? notifyEl.checked : true;
   const verb = status === 'Approved' ? 'approve and publish' : status === 'Rejected' ? 'reject' : 'update';
-  if (status !== 'Pending' && !confirm(`${verb.charAt(0).toUpperCase() + verb.slice(1)} this review? The customer will be emailed.`)) {
-    selectEl.value = prev;
-    return;
+  if (status !== 'Pending') {
+    const emailNote = notify ? 'The customer will be emailed.' : 'The customer will NOT be emailed (Notify customer is unchecked).';
+    if (!confirm(`${verb.charAt(0).toUpperCase() + verb.slice(1)} this review? ${emailNote}`)) {
+      selectEl.value = prev;
+      return;
+    }
   }
   try {
     const res = await fetch(`${API_BASE}/api/admin/reviews/${encodeURIComponent(reviewId)}/status`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, notify }),
     });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || 'Could not update that review.');

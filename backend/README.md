@@ -37,7 +37,7 @@ directly. Change a price in exactly one place.
    `Contact`, `Newsletter`, `Returns`, `Profiles`, `Addresses`, `Reviews`
    (case-sensitive). Give each this exact header row (order matters —
    the backend writes/reads by column position, not by header name):
-   - `Orders`: `Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs`
+   - `Orders`: `Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs | Cancellation Reason`
    - `Contact`: `Submitted At | First Name | Last Name | Email | Phone | Subject | Message`
    - `Newsletter`: `Signed Up At | Email`
    - `Returns`: `Requested At | Order ID | Customer Email | Items | Reason | Status | Image URL | Return ID | Video URL | Verification Phrase`
@@ -123,23 +123,34 @@ account for Sheets access; this one lets real customers sign in.
 Your `Orders` tab's header row (row 1) should read left to right:
 
 ```
-Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs
+Order ID | Date | Payment Status | Name | Email | Phone | Items | Total | Fulfillment Status | Delivered At | Account Email | Address | Item IDs | Cancellation Reason
 ```
 
 `Account Email` and `Address` are the two newest columns — `Account Email`
 is only ever the signed-in account's own email (used to match "My
 Orders"); `Address` is the delivery address typed at checkout, shown
 to you in `/admin.html` so you know where to ship each order. `Item IDs`
-is the newest column -- a compact `cubes:2;dual:1` record of exactly
-which product ids (and quantities) were in the order, written once at
-checkout. `Items` (the older column) is a human-readable string built
-from product NAMES, which is fine to look at but can't be reliably
-matched back to a real product id -- `Item IDs` is what lets a
-customer "review this product" on `/orders.html` (see Reviews below)
-without guessing from that display text. Orders placed before this
-column existed simply won't offer a review button -- same as they
-already can't offer a return, for the same "nothing to check it
-against" reason.
+is a compact `cubes:2;dual:1` record of exactly which product ids (and
+quantities) were in the order, written once at checkout. `Items` (the
+older column) is a human-readable string built from product NAMES,
+which is fine to look at but can't be reliably matched back to a real
+product id -- `Item IDs` is what lets a customer "review this product"
+on `/orders.html` (see Reviews below) without guessing from that
+display text. Orders placed before this column existed simply won't
+offer a review button -- same as they already can't offer a return,
+for the same "nothing to check it against" reason.
+
+`Cancellation Reason` is the newest column, written whenever a
+customer cancels their own order from `/orders.html` (`POST
+/api/orders/:orderId/cancel`) — the reason box there is mandatory, so
+this is never blank for a customer-initiated cancellation. It's left
+blank when an order is cancelled from the admin side instead
+(`/admin.html`'s order status dropdown), since that flow has its own
+optional `note` field that goes straight into the customer's email
+rather than into this column. Self-cancellation is only allowed while
+the order is still at "Order Placed" (nothing shipped yet) -- the
+server re-checks this itself before writing anything, regardless of
+what the button looked like in the browser.
 
 **Checkout requires sign-in.** `POST /api/checkout/create-order` is
 guarded by the same `requireAuth` middleware as `/api/orders/mine`,

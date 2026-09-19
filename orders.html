@@ -56,6 +56,22 @@
       <p style="font-size:14px;color:var(--text);white-space:pre-wrap;" id="odShipAddress"></p>
     </div>
 
+    <div id="cancelOrderSection" style="display:none;margin-top:20px;">
+      <button type="button" class="btn-sm" id="odCancelBtn" onclick="toggleCancelConfirm(true)">Cancel Order</button>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;" id="cancelOrderHint">You can cancel your order until it ships.</p>
+      <div id="cancelConfirmBox" style="display:none;margin-top:12px;padding:14px;border:1.5px solid #ddd;border-radius:8px;background:var(--cream);">
+        <p style="font-weight:600;color:var(--navy);margin-bottom:12px;">Cancel this order? This can't be undone.</p>
+        <div class="form-group">
+          <label>Why are you cancelling? *</label>
+          <textarea id="cancelReason" placeholder="Let us know what happened" oninput="capCancelReasonWords(this)"></textarea>
+          <p id="cancelReasonCount" style="font-size:11px;color:var(--muted);text-align:right;margin-top:4px;">0/100 words</p>
+        </div>
+        <button type="button" class="form-submit" id="cancelConfirmYesBtn" onclick="cancelOrder()">Yes, Cancel Order</button>
+        <button type="button" class="btn-sm" style="background:transparent;color:var(--muted);border:1px solid #ddd;margin-left:8px;" onclick="toggleCancelConfirm(false)">No, Keep Order</button>
+      </div>
+      <div class="form-error" id="cancelOrderError"></div>
+    </div>
+
     <div id="reviewSection" style="display:none;margin-top:20px;">
       <p style="font-weight:700;color:var(--navy);font-size:13px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Rate Your Products</p>
       <div id="odReviewsList"></div>
@@ -205,6 +221,16 @@ async function openOrder(orderId) {
   document.getElementById('reviewSection').style.display = 'none';
   document.getElementById('odReviewsList').innerHTML = '';
   closeReviewForm();
+  document.getElementById('cancelOrderSection').style.display = 'none';
+  document.getElementById('cancelOrderError').style.display = 'none';
+  const odCancelBtnReset = document.getElementById('odCancelBtn');
+  odCancelBtnReset.disabled = false;
+  odCancelBtnReset.textContent = 'Cancel Order';
+  odCancelBtnReset.style.display = 'inline-block';
+  document.getElementById('cancelConfirmBox').style.display = 'none';
+  document.getElementById('cancelOrderHint').style.display = 'block';
+  document.getElementById('cancelReason').value = '';
+  document.getElementById('cancelReasonCount').textContent = '0/100 words';
   document.getElementById('returnSection').style.display = 'block';
   document.getElementById('odReturnBtn').style.display = 'inline-block';
   document.getElementById('returnStatusBanner').style.display = 'none';
@@ -239,6 +265,8 @@ async function openOrder(orderId) {
       notice.style.color = '#b3261e';
       document.getElementById('returnSection').style.display = 'none';
     } else {
+      const preShip = !data.order.status || data.order.status === 'Order Placed';
+      document.getElementById('cancelOrderSection').style.display = preShip ? 'block' : 'none';
       document.getElementById('odStepper').innerHTML = data.stages.map(s => `
         <div class="step ${s.done ? 'done' : ''}">
           <div class="step-dot">${s.done ? '✓' : ''}</div>
@@ -253,7 +281,7 @@ async function openOrder(orderId) {
     }
 
     document.getElementById('odItems').innerHTML = `<div class="order-row"><span>${data.order.items}</span><span>₹${data.order.total}</span></div>`;
-    renderOrderReviews(data.order, data.reviewStatuses || {});
+    renderOrderReviews(data.order, data.reviewStatuses || {}, data.returnStatus);
     if (data.order.phone || data.order.address) {
       document.getElementById('odShipPhone').textContent = data.order.phone ? `Phone: ${data.order.phone}` : '';
       document.getElementById('odShipAddress').textContent = data.order.address || 'No delivery address on file for this order.';
@@ -261,6 +289,70 @@ async function openOrder(orderId) {
     }
   } catch (err) {
     document.getElementById('odItems').innerHTML = `<p style="color:#842029">${err.message}</p>`;
+  }
+}
+
+// Swaps the "Cancel Order" button for an inline "Cancel this order?
+// / Yes / No" box, instead of the browser's own unstyled confirm()
+// popup -- same pattern as the rest of this page's forms.
+function toggleCancelConfirm(open) {
+  document.getElementById('odCancelBtn').style.display = open ? 'none' : 'inline-block';
+  document.getElementById('cancelOrderHint').style.display = open ? 'none' : 'block';
+  document.getElementById('cancelConfirmBox').style.display = open ? 'block' : 'none';
+  document.getElementById('cancelOrderError').style.display = 'none';
+  if (!open) {
+    document.getElementById('cancelReason').value = '';
+    document.getElementById('cancelReasonCount').textContent = '0/100 words';
+  }
+}
+
+const CANCEL_REASON_MAX_WORDS = 100;
+function capCancelReasonWords(el) {
+  const words = el.value.trim().split(/\s+/).filter(Boolean);
+  if (words.length > CANCEL_REASON_MAX_WORDS) {
+    el.value = words.slice(0, CANCEL_REASON_MAX_WORDS).join(' ');
+  }
+  const count = el.value.trim() ? el.value.trim().split(/\s+/).filter(Boolean).length : 0;
+  document.getElementById('cancelReasonCount').textContent = `${count}/${CANCEL_REASON_MAX_WORDS} words`;
+}
+
+// Cancels the order via the server, which independently re-checks the
+// current status before allowing it (see the route for why: the copy
+// of "status" this page loaded can be a few minutes stale). If it's
+// too late, the server refuses with a clear reason and nothing here
+// changes -- the order stays exactly as it was.
+async function cancelOrder() {
+  const errEl = document.getElementById('cancelOrderError');
+  errEl.style.display = 'none';
+  const reason = document.getElementById('cancelReason').value.trim();
+  if (!reason) {
+    errEl.textContent = "Please tell us why you're cancelling.";
+    errEl.style.display = 'block';
+    return;
+  }
+  // The visible button at this point is "Yes, Cancel Order" inside the
+  // confirm box, not the (hidden) original "Cancel Order" trigger --
+  // disable/relabel that one so the click actually shows feedback.
+  const btn = document.getElementById('cancelConfirmYesBtn');
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Cancelling…';
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(currentOrderId)}/cancel`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not cancel this order.');
+    loadOrders();
+    openOrder(currentOrderId);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
@@ -480,16 +572,33 @@ function capReturnReasonWords(el) {
    already filed. Only shown once the order is Delivered -- reviewing
    something before it's arrived doesn't make sense, and there's
    nothing to check the review against server-side before then either. */
+// Escapes text before it's interpolated into an HTML string, so a
+// product name (or any other dynamic value) can never break out of an
+// attribute or tag -- used anywhere we build markup from data instead
+// of setting .textContent directly.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const REVIEW_TEXT_MAX_WORDS = 100;
 const DELIVERY_SPEEDS = ['Fast', 'On Time', 'Late'];
 let reviewingProductId = null;
 let selectedReviewStars = 0;
 let selectedDeliverySpeed = '';
 
-function renderOrderReviews(order, reviewStatuses) {
+function renderOrderReviews(order, reviewStatuses, returnStatus) {
   const section = document.getElementById('reviewSection');
   const list = document.getElementById('odReviewsList');
-  if (order.status !== 'Delivered' || !order.itemIds || !order.itemIds.length) {
+  // An approved return means the product went back -- nothing left here
+  // to review. A still-pending return request doesn't block this (they
+  // still have the product until/unless it's approved), only "Approved"
+  // does.
+  if (order.status !== 'Delivered' || !order.itemIds || !order.itemIds.length || returnStatus === 'Approved') {
     section.style.display = 'none';
     list.innerHTML = '';
     return;
@@ -499,12 +608,27 @@ function renderOrderReviews(order, reviewStatuses) {
     const product = PRODUCTS.find(p => p.id === id);
     const name = product ? product.name : id;
     const status = reviewStatuses[id];
+    // Deliberately not showing Pending/Approved/Rejected here -- moderation
+    // is silent by design (see the admin "Notify customer" change), so the
+    // customer just sees that their review is in, not the verdict on it.
     const action = !status
-      ? `<button type="button" class="btn-sm" onclick="openReviewForm('${id}', ${JSON.stringify(name)})">Write a Review</button>`
-      : `<span class="review-status-pill ${status.toLowerCase()}">${status === 'Pending' ? 'Awaiting approval' : status}</span>`;
-    return `<div class="review-item-row"><span>${name}</span>${action}</div>`;
+      ? `<button type="button" class="btn-sm" data-review-product-id="${escapeHtml(id)}" data-review-product-name="${escapeHtml(name)}">Write a Review</button>`
+      : `<span class="review-status-pill submitted">Review submitted</span>`;
+    return `<div class="review-item-row"><span>${escapeHtml(name)}</span>${action}</div>`;
   }).join('');
 }
+
+// Single delegated listener for every "Write a Review" button, present or
+// future -- reads the product id/name off data-* attributes rather than
+// having them baked into an inline onclick string, which is what broke
+// (product names get JSON-embedded text with real quote characters in it,
+// and there's no safe way to nest that inside an already double-quoted
+// HTML attribute).
+document.getElementById('odReviewsList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-review-product-id]');
+  if (!btn) return;
+  openReviewForm(btn.dataset.reviewProductId, btn.dataset.reviewProductName);
+});
 
 function openReviewForm(productId, productName) {
   reviewingProductId = productId;
@@ -518,6 +642,7 @@ function openReviewForm(productId, productName) {
   paintReviewStars();
   document.querySelectorAll('#deliverySpeedGroup .label-choice').forEach(btn => btn.classList.remove('active'));
   document.getElementById('reviewForm').style.display = 'block';
+  document.getElementById('reviewForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function closeReviewForm() {

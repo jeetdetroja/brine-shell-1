@@ -10,7 +10,7 @@ const { REVIEWS_COL, REVIEW_STATUSES } = require('../lib/reviewsSchema');
 const { getProduct } = require('../lib/catalog');
 
 const router = express.Router();
-const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8, deliveredAt: 9, accountEmail: 10, address: 11 };
+const COL = { id: 0, date: 1, paymentStatus: 2, name: 3, email: 4, phone: 5, items: 6, total: 7, status: 8, deliveredAt: 9, accountEmail: 10, address: 11, cancelReason: 13 };
 
 // Returns sheet columns: Timestamp | Order ID | Customer Email |
 // Items | Reason | Status | Image URL | Return ID | Video URL.
@@ -61,6 +61,13 @@ router.get('/orders', requireAdmin, async (req, res) => {
       status: r[COL.status] || 'Order Placed',
       address: r[COL.address] || '',
       accountEmail: r[COL.accountEmail] || '',
+      // Only ever set when the customer cancelled it themselves from
+      // /orders.html (that flow requires a reason). Blank means either
+      // this order isn't cancelled, or it was cancelled by an admin
+      // instead (whose reason, if any, went straight into the
+      // customer's email rather than into this column) -- see
+      // backend/README.md.
+      cancelReason: r[COL.cancelReason] || '',
     }))
     .reverse();
 
@@ -218,6 +225,13 @@ router.get('/reviews', requireAdmin, async (req, res) => {
    the shop page unless Approved. */
 router.post('/reviews/:reviewId/status', requireAdmin, async (req, res) => {
   const { status } = req.body || {};
+  // notify defaults to FALSE: like Flipkart/Amazon-style moderation,
+  // reviews are approved or rejected silently by default -- moderation
+  // here exists to keep vulgar/abusive/spam content off a personal brand
+  // site, not to run an email loop with every reviewer. The admin can
+  // still tick "Notify customer" per-row for the rare case they want to
+  // reach out (e.g. a mistaken rejection worth explaining).
+  const notify = req.body?.notify === true;
   if (!REVIEW_STATUSES.includes(status)) {
     return res.status(400).json({ ok: false, error: `Status must be one of: ${REVIEW_STATUSES.join(', ')}` });
   }
@@ -234,11 +248,12 @@ router.post('/reviews/:reviewId/status', requireAdmin, async (req, res) => {
     return res.status(404).json({ ok: false, error: 'Review not found.' });
   }
 
-  // Best-effort: let the customer know their review is live (or wasn't approved).
+  // Best-effort: let the customer know their review is live (or wasn't
+  // approved) -- unless the admin explicitly opted out of notifying them.
   try {
     const rows = await getRows('Reviews');
     const row = rows.slice(1).find(r => r[REVIEWS_COL.id] === req.params.reviewId);
-    if (row?.[REVIEWS_COL.email]) {
+    if (notify && row?.[REVIEWS_COL.email]) {
       const productName = getProduct(row[REVIEWS_COL.productId])?.name || row[REVIEWS_COL.productId];
       await sendEmail({
         to: row[REVIEWS_COL.email],
